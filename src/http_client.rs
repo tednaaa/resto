@@ -26,23 +26,19 @@ impl HttpClient {
 		let start_time = Instant::now();
 
 		let method = self.convert_method(&request.method);
-		let mut req_builder = self.client.request(method, &request.url);
+		let mut request_builder = self.client.request(method, &request.url);
 
-		// Add headers
 		for (key, value) in &request.headers {
-			req_builder = req_builder.header(key, value);
+			request_builder = request_builder.header(key, value);
 		}
 
-		// Add body if applicable
 		if request.has_body() && !request.body.is_empty() {
-			req_builder = req_builder.body(request.body.clone());
+			request_builder = request_builder.body(request.body.clone());
 		}
 
-		// Send request
-		let response = req_builder.send().await?;
+		let response = request_builder.send().await?;
 		let response_time = start_time.elapsed();
 
-		// Extract response data
 		let status_code = response.status().as_u16();
 		let status_text = response.status().canonical_reason().unwrap_or("Unknown").to_string();
 
