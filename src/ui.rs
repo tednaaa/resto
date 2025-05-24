@@ -41,7 +41,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 }
 
 fn draw_header(f: &mut Frame, area: Rect, _app: &App) {
-	let title = "Resto - HTTP Client";
+	let title = "resto - HTTP Client";
 	let header = Paragraph::new(title)
 		.style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
 		.alignment(Alignment::Center)
@@ -379,7 +379,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_help(f: &mut Frame, area: Rect) {
 	let help_text = vec![
-		"Resto - HTTP Client Help",
+		"resto - HTTP Client Help",
 		"",
 		"Navigation:",
 		"  Tab/Shift+Tab  - Switch between tabs",
