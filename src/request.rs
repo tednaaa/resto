@@ -31,7 +31,7 @@ impl HttpRequest {
 		self
 	}
 
-	pub fn with_method(mut self, method: HttpMethod) -> Self {
+	pub const fn with_method(mut self, method: HttpMethod) -> Self {
 		self.method = method;
 		self
 	}
@@ -56,14 +56,14 @@ impl HttpRequest {
 			.or_else(|| self.headers.get("content-type"))
 	}
 
-	pub fn has_body(&self) -> bool {
+	pub const fn has_body(&self) -> bool {
 		matches!(self.method, HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch)
 	}
 
 	pub fn formatted_headers(&self) -> String {
 		self.headers
 			.iter()
-			.map(|(k, v)| format!("{}: {}", k, v))
+			.map(|(key, value)| format!("{key}: {value}"))
 			.collect::<Vec<_>>()
 			.join("\n")
 	}

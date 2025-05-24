@@ -61,7 +61,7 @@ impl HttpClient {
 		))
 	}
 
-	fn convert_method(&self, method: &HttpMethod) -> Method {
+	const fn convert_method(&self, method: &HttpMethod) -> Method {
 		match method {
 			HttpMethod::Get => Method::GET,
 			HttpMethod::Post => Method::POST,

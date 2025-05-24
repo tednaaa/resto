@@ -16,7 +16,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 			Constraint::Min(0),    // Main content
 			Constraint::Length(3), // Footer
 		])
-		.split(f.size());
+		.split(f.area());
 
 	draw_header(f, chunks[0], app);
 
@@ -348,10 +348,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 	];
 
 	if let Some(error) = &app.error_message {
-		help_text = vec![Span::styled(
-			format!("Error: {}", error),
-			Style::default().fg(Color::Red),
-		)];
+		help_text = vec![Span::styled(format!("Error: {error}"), Style::default().fg(Color::Red))];
 	}
 
 	let footer = Paragraph::new(Line::from(help_text))
@@ -403,7 +400,7 @@ fn draw_help(f: &mut Frame, area: Rect) {
 }
 
 fn draw_input_popup(f: &mut Frame, app: &App) {
-	let popup_area = centered_rect(60, 20, f.size());
+	let popup_area = centered_rect(60, 20, f.area());
 
 	f.render_widget(Clear, popup_area);
 
@@ -433,7 +430,7 @@ fn draw_input_popup(f: &mut Frame, app: &App) {
 }
 
 fn draw_loading_popup(f: &mut Frame) {
-	let popup_area = centered_rect(30, 10, f.size());
+	let popup_area = centered_rect(30, 10, f.area());
 
 	f.render_widget(Clear, popup_area);
 

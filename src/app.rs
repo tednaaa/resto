@@ -5,7 +5,7 @@ use crate::http_client::HttpClient;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppState {
 	Normal,
 	EditingUrl,
@@ -15,13 +15,13 @@ pub enum AppState {
 	Help,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InputMode {
 	Normal,
 	Editing,
 }
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum HttpMethod {
 	Get,
 	Post,
@@ -33,39 +33,39 @@ pub enum HttpMethod {
 }
 
 impl HttpMethod {
-	pub fn as_str(&self) -> &'static str {
+	pub const fn as_str(&self) -> &'static str {
 		match self {
-			HttpMethod::Get => "GET",
-			HttpMethod::Post => "POST",
-			HttpMethod::Put => "PUT",
-			HttpMethod::Delete => "DELETE",
-			HttpMethod::Patch => "PATCH",
-			HttpMethod::Head => "HEAD",
-			HttpMethod::Options => "OPTIONS",
+			Self::Get => "GET",
+			Self::Post => "POST",
+			Self::Put => "PUT",
+			Self::Delete => "DELETE",
+			Self::Patch => "PATCH",
+			Self::Head => "HEAD",
+			Self::Options => "OPTIONS",
 		}
 	}
 
-	pub fn next(&self) -> Self {
+	pub const fn next(&self) -> Self {
 		match self {
-			HttpMethod::Get => HttpMethod::Post,
-			HttpMethod::Post => HttpMethod::Put,
-			HttpMethod::Put => HttpMethod::Delete,
-			HttpMethod::Delete => HttpMethod::Patch,
-			HttpMethod::Patch => HttpMethod::Head,
-			HttpMethod::Head => HttpMethod::Options,
-			HttpMethod::Options => HttpMethod::Get,
+			Self::Get => Self::Post,
+			Self::Post => Self::Put,
+			Self::Put => Self::Delete,
+			Self::Delete => Self::Patch,
+			Self::Patch => Self::Head,
+			Self::Head => Self::Options,
+			Self::Options => Self::Get,
 		}
 	}
 
-	pub fn prev(&self) -> Self {
+	pub const fn prev(&self) -> Self {
 		match self {
-			HttpMethod::Get => HttpMethod::Options,
-			HttpMethod::Post => HttpMethod::Get,
-			HttpMethod::Put => HttpMethod::Post,
-			HttpMethod::Delete => HttpMethod::Put,
-			HttpMethod::Patch => HttpMethod::Delete,
-			HttpMethod::Head => HttpMethod::Patch,
-			HttpMethod::Options => HttpMethod::Head,
+			Self::Get => Self::Options,
+			Self::Post => Self::Get,
+			Self::Put => Self::Post,
+			Self::Delete => Self::Put,
+			Self::Patch => Self::Delete,
+			Self::Head => Self::Patch,
+			Self::Options => Self::Head,
 		}
 	}
 }
@@ -116,7 +116,7 @@ impl App {
 	pub async fn handle_key_event(&mut self, key: KeyEvent) -> Result<()> {
 		match self.input_mode {
 			InputMode::Normal => self.handle_normal_mode_key(key).await?,
-			InputMode::Editing => self.handle_editing_mode_key(key)?,
+			InputMode::Editing => self.handle_editing_mode_key(key),
 		}
 		Ok(())
 	}
@@ -194,7 +194,7 @@ impl App {
 		Ok(())
 	}
 
-	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> Result<()> {
+	fn handle_editing_mode_key(&mut self, key: KeyEvent) {
 		match key.code {
 			KeyCode::Enter => match self.state {
 				AppState::EditingUrl => {
@@ -281,7 +281,6 @@ impl App {
 			}
 			_ => {}
 		}
-		Ok(())
 	}
 
 	async fn send_request(&mut self) -> Result<()> {
@@ -299,8 +298,8 @@ impl App {
 				self.selected_response = Some(self.responses.len() - 1);
 				self.active_tab = 1; // Switch to response tab
 			}
-			Err(e) => {
-				self.error_message = Some(format!("Request failed: {}", e));
+			Err(error) => {
+				self.error_message = Some(format!("Request failed: {error}"));
 			}
 		}
 
@@ -308,8 +307,9 @@ impl App {
 		Ok(())
 	}
 
+	// TODO: Handle any background updates here
+	#[allow(clippy::unused_async, clippy::needless_pass_by_ref_mut)]
 	pub async fn update(&mut self) -> Result<()> {
-		// Handle any background updates here
 		Ok(())
 	}
 
@@ -319,11 +319,8 @@ impl App {
 	}
 
 	pub fn get_current_response(&self) -> Option<&HttpResponse> {
-		if let Some(index) = self.selected_response {
-			self.responses.get(index)
-		} else {
-			self.responses.last()
-		}
+		self.selected_response
+			.map_or_else(|| self.responses.last(), |index| self.responses.get(index))
 	}
 
 	pub fn add_header(&mut self, key: String, value: String) {

@@ -31,8 +31,8 @@ async fn main() -> Result<()> {
 	execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
 	terminal.show_cursor()?;
 
-	if let Err(err) = res {
-		println!("Error: {:?}", err);
+	if let Err(error) = res {
+		println!("Error: {error}");
 	}
 
 	Ok(())

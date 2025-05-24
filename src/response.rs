@@ -25,6 +25,7 @@ impl HttpResponse {
 		response_time: Duration,
 	) -> Self {
 		let size = body.len();
+
 		Self {
 			id: uuid::Uuid::new_v4().to_string(),
 			request_id,
@@ -32,21 +33,22 @@ impl HttpResponse {
 			status_text,
 			headers,
 			body,
+			#[allow(clippy::cast_possible_truncation)]
 			response_time: response_time.as_millis() as u64,
 			size,
 			created_at: chrono::Utc::now(),
 		}
 	}
 
-	pub fn is_success(&self) -> bool {
+	pub const fn is_success(&self) -> bool {
 		self.status_code >= 200 && self.status_code < 300
 	}
 
-	pub fn is_client_error(&self) -> bool {
+	pub const fn is_client_error(&self) -> bool {
 		self.status_code >= 400 && self.status_code < 500
 	}
 
-	pub fn is_server_error(&self) -> bool {
+	pub const fn is_server_error(&self) -> bool {
 		self.status_code >= 500
 	}
 
@@ -57,25 +59,22 @@ impl HttpResponse {
 	}
 
 	pub fn is_json(&self) -> bool {
-		self.content_type()
-			.map(|ct| ct.contains("application/json"))
-			.unwrap_or(false)
+		self.content_type().is_some_and(|ct| ct.contains("application/json"))
 	}
 
 	pub fn is_xml(&self) -> bool {
 		self.content_type()
-			.map(|ct| ct.contains("application/xml") || ct.contains("text/xml"))
-			.unwrap_or(false)
+			.is_some_and(|ct| ct.contains("application/xml") || ct.contains("text/xml"))
 	}
 
 	pub fn is_html(&self) -> bool {
-		self.content_type().map(|ct| ct.contains("text/html")).unwrap_or(false)
+		self.content_type().is_some_and(|ct| ct.contains("text/html"))
 	}
 
 	pub fn formatted_headers(&self) -> String {
 		self.headers
 			.iter()
-			.map(|(k, v)| format!("{}: {}", k, v))
+			.map(|(key, value)| format!("{key}: {value}"))
 			.collect::<Vec<_>>()
 			.join("\n")
 	}
@@ -99,7 +98,7 @@ impl HttpResponse {
 		}
 	}
 
-	pub fn status_color(&self) -> &'static str {
+	pub const fn status_color(&self) -> &'static str {
 		match self.status_code {
 			200..=299 => "green",
 			300..=399 => "yellow",

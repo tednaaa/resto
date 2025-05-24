@@ -9,16 +9,17 @@ repository = "https://github.com/tednaaa/resto"
 readme = "README.md"
 keywords = ["tui", "http_client"]
 
-# [lints.clippy]
-# pedantic = "warn"
-# nursery = "warn"
-# unwrap_used = "warn"
-# expect_used = "warn"
-# panic = "warn"
-# missing_docs_in_private_items = "warn"
-# missing_errors_doc = "warn"
-# missing_panics_doc = "warn"
-# missing_safety_doc = "warn"
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+missing_safety_doc = "warn"
+
+unused_self = "allow"
 
 [dependencies]
 ratatui = "0.29"
