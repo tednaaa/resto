@@ -18,7 +18,7 @@ impl HttpRequest {
 	pub fn new() -> Self {
 		Self {
 			id: Uuid::new_v4().to_string(),
-			method: HttpMethod::GET,
+			method: HttpMethod::Get,
 			url: String::new(),
 			headers: HashMap::new(),
 			body: String::new(),
@@ -57,7 +57,7 @@ impl HttpRequest {
 	}
 
 	pub fn has_body(&self) -> bool {
-		matches!(self.method, HttpMethod::POST | HttpMethod::PUT | HttpMethod::PATCH)
+		matches!(self.method, HttpMethod::Post | HttpMethod::Put | HttpMethod::Patch)
 	}
 
 	pub fn formatted_headers(&self) -> String {

@@ -1,9 +1,9 @@
 use ratatui::{
+	Frame,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
 	style::{Color, Modifier, Style},
 	text::{Line, Span},
 	widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Tabs, Wrap},
-	Frame,
 };
 
 use crate::app::{App, AppState, InputMode};
@@ -18,19 +18,15 @@ pub fn draw(f: &mut Frame, app: &App) {
 		])
 		.split(f.size());
 
-	// Header
 	draw_header(f, chunks[0], app);
 
-	// Main content based on state
 	match app.state {
 		AppState::Help => draw_help(f, chunks[1]),
 		_ => draw_main_content(f, chunks[1], app),
 	}
 
-	// Footer
 	draw_footer(f, chunks[2], app);
 
-	// Draw popups/overlays
 	if matches!(app.input_mode, InputMode::Editing) {
 		draw_input_popup(f, app);
 	}
@@ -41,7 +37,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 }
 
 fn draw_header(f: &mut Frame, area: Rect, _app: &App) {
-	let title = "Resto - HTTP Client";
+	let title = "resto - HTTP Client";
 	let header = Paragraph::new(title)
 		.style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
 		.alignment(Alignment::Center)
@@ -97,13 +93,10 @@ fn draw_request_tab(f: &mut Frame, area: Rect, app: &App) {
 		])
 		.split(area);
 
-	// Method and URL section
 	draw_method_url_section(f, chunks[0], app);
 
-	// Headers section
 	draw_headers_section(f, chunks[1], app);
 
-	// Body section
 	draw_body_section(f, chunks[2], app);
 }
 
@@ -113,7 +106,6 @@ fn draw_method_url_section(f: &mut Frame, area: Rect, app: &App) {
 		.constraints([Constraint::Length(10), Constraint::Min(0)])
 		.split(area);
 
-	// Method selector
 	let method_style = if matches!(app.state, AppState::Normal) {
 		Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
 	} else {
@@ -131,7 +123,6 @@ fn draw_method_url_section(f: &mut Frame, area: Rect, app: &App) {
 		);
 	f.render_widget(method_widget, chunks[0]);
 
-	// URL input
 	let url_style = if matches!(app.state, AppState::EditingUrl) {
 		Style::default().fg(Color::Yellow)
 	} else {
@@ -220,7 +211,6 @@ fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
 			])
 			.split(area);
 
-		// Status line
 		let status_color = match response.status_code {
 			200..=299 => Color::Green,
 			300..=399 => Color::Yellow,
@@ -248,7 +238,6 @@ fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
 			);
 		f.render_widget(status_widget, chunks[0]);
 
-		// Response headers
 		let headers_widget = Paragraph::new(response.formatted_headers())
 			.style(Style::default().fg(Color::White))
 			.wrap(Wrap { trim: true })
@@ -260,7 +249,6 @@ fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
 			);
 		f.render_widget(headers_widget, chunks[1]);
 
-		// Response body
 		let body_text = if response.is_json() {
 			response.pretty_json().unwrap_or_else(|_| response.body.clone())
 		} else {
@@ -379,7 +367,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_help(f: &mut Frame, area: Rect) {
 	let help_text = vec![
-		"Resto - HTTP Client Help",
+		"resto - HTTP Client Help",
 		"",
 		"Navigation:",
 		"  Tab/Shift+Tab  - Switch between tabs",
