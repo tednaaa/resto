@@ -14,7 +14,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 		.constraints([
 			Constraint::Length(3), // Header
 			Constraint::Min(0),    // Main content
-			Constraint::Length(3), // Footer
+			Constraint::Length(1), // Footer
 		])
 		.split(f.area());
 
@@ -337,14 +337,10 @@ fn draw_history_tab(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 	let mut help_text = vec![
-		Span::raw("q: Quit | "),
-		Span::raw("Tab: Switch tabs | "),
-		Span::raw("u: Edit URL | "),
-		Span::raw("h: Edit headers | "),
-		Span::raw("b: Edit body | "),
-		Span::raw("m/M: Change method | "),
-		Span::raw("Enter: Send request | "),
-		Span::raw("?: Help"),
+		Span::raw("Help: ? | "),
+		Span::raw("Switch tabs: Tab | "),
+		Span::raw("Change method: m/M | "),
+		Span::raw("Send request: Enter"),
 	];
 
 	if let Some(error) = &app.error_message {
@@ -353,12 +349,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 
 	let footer = Paragraph::new(Line::from(help_text))
 		.style(Style::default().fg(Color::White))
-		.alignment(Alignment::Left)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.border_style(Style::default().fg(Color::White)),
-		);
+		.alignment(Alignment::Left);
 	f.render_widget(footer, area);
 }
 
