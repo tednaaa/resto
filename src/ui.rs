@@ -348,7 +348,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 	}
 
 	let footer = Paragraph::new(Line::from(help_text))
-		.style(Style::default().fg(Color::White))
+		.style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
 		.alignment(Alignment::Left);
 	f.render_widget(footer, area);
 }
