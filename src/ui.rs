@@ -12,20 +12,17 @@ pub fn draw(f: &mut Frame, app: &App) {
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints([
-			Constraint::Length(3), // Header
 			Constraint::Min(0),    // Main content
 			Constraint::Length(1), // Footer
 		])
 		.split(f.area());
 
-	draw_header(f, chunks[0], app);
-
 	match app.state {
-		AppState::Help => draw_help(f, chunks[1]),
-		_ => draw_main_content(f, chunks[1], app),
+		AppState::Help => draw_help(f, chunks[0]),
+		_ => draw_main_content(f, chunks[0], app),
 	}
 
-	draw_footer(f, chunks[2], app);
+	draw_footer(f, chunks[1], app);
 
 	if matches!(app.input_mode, InputMode::Editing) {
 		draw_input_popup(f, app);
@@ -34,19 +31,6 @@ pub fn draw(f: &mut Frame, app: &App) {
 	if app.loading {
 		draw_loading_popup(f);
 	}
-}
-
-fn draw_header(f: &mut Frame, area: Rect, _app: &App) {
-	let title = "resto - HTTP Client";
-	let header = Paragraph::new(title)
-		.style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
-		.alignment(Alignment::Center)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.border_style(Style::default().fg(Color::White)),
-		);
-	f.render_widget(header, area);
 }
 
 fn draw_main_content(f: &mut Frame, area: Rect, app: &App) {
@@ -347,10 +331,22 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 		help_text = vec![Span::styled(format!("Error: {error}"), Style::default().fg(Color::Red))];
 	}
 
-	let footer = Paragraph::new(Line::from(help_text))
-		.style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
-		.alignment(Alignment::Left);
-	f.render_widget(footer, area);
+	let info_text = format!("resto v{}", env!("CARGO_PKG_VERSION"));
+	let info_text_area = info_text.chars().count() as u16;
+
+	let layout = Layout::default()
+		.direction(Direction::Horizontal)
+		.constraints([Constraint::Min(0), Constraint::Length(info_text_area)])
+		.split(area);
+
+	f.render_widget(
+		Paragraph::new(Line::from(help_text)).style(Style::default().fg(Color::Yellow)),
+		layout[0],
+	);
+	f.render_widget(
+		Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta)),
+		layout[1],
+	);
 }
 
 fn draw_help(f: &mut Frame, area: Rect) {

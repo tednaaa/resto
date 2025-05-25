@@ -20,6 +20,8 @@ missing_panics_doc = "warn"
 missing_safety_doc = "warn"
 
 unused_self = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
 
 [dependencies]
 ratatui = "0.29"
