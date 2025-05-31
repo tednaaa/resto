@@ -8,32 +8,28 @@ use ratatui::{
 
 use crate::app::{App, AppState, InputMode};
 
-pub fn draw(f: &mut Frame, app: &App) {
+pub fn draw(frame: &mut Frame, app: &App) {
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints([
 			Constraint::Min(0),    // Main content
 			Constraint::Length(1), // Footer
 		])
-		.split(f.area());
+		.split(frame.area());
 
 	match app.state {
-		AppState::Help => draw_help(f, chunks[0]),
-		_ => draw_main_content(f, chunks[0], app),
+		AppState::Help => draw_help(frame, chunks[0]),
+		_ => draw_main_content(frame, chunks[0], app),
 	}
 
-	draw_footer(f, chunks[1], app);
-
-	if matches!(app.input_mode, InputMode::Editing) {
-		draw_input_popup(f, app);
-	}
+	draw_footer(frame, chunks[1], app);
 
 	if app.loading {
-		draw_loading_popup(f);
+		draw_loading_popup(frame);
 	}
 }
 
-fn draw_main_content(f: &mut Frame, area: Rect, app: &App) {
+fn draw_main_content(frame: &mut Frame, area: Rect, app: &App) {
 	let tabs = ["Request", "Response", "History"];
 	let tab_titles: Vec<Line> = tabs
 		.iter()
@@ -57,17 +53,17 @@ fn draw_main_content(f: &mut Frame, area: Rect, app: &App) {
 		.constraints([Constraint::Length(3), Constraint::Min(0)])
 		.split(area);
 
-	f.render_widget(tabs_widget, chunks[0]);
+	frame.render_widget(tabs_widget, chunks[0]);
 
 	match app.active_tab {
-		0 => draw_request_tab(f, chunks[1], app),
-		1 => draw_response_tab(f, chunks[1], app),
-		2 => draw_history_tab(f, chunks[1], app),
+		0 => draw_request_tab(frame, chunks[1], app),
+		1 => draw_response_tab(frame, chunks[1], app),
+		2 => draw_history_tab(frame, chunks[1], app),
 		_ => {}
 	}
 }
 
-fn draw_request_tab(f: &mut Frame, area: Rect, app: &App) {
+fn draw_request_tab(frame: &mut Frame, area: Rect, app: &App) {
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints([
@@ -77,14 +73,12 @@ fn draw_request_tab(f: &mut Frame, area: Rect, app: &App) {
 		])
 		.split(area);
 
-	draw_method_url_section(f, chunks[0], app);
-
-	draw_headers_section(f, chunks[1], app);
-
-	draw_body_section(f, chunks[2], app);
+	draw_method_url_section(frame, chunks[0], app);
+	draw_headers_section(frame, chunks[1], app);
+	draw_body_section(frame, chunks[2], app);
 }
 
-fn draw_method_url_section(f: &mut Frame, area: Rect, app: &App) {
+fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
 		.constraints([Constraint::Length(10), Constraint::Min(0)])
@@ -105,86 +99,108 @@ fn draw_method_url_section(f: &mut Frame, area: Rect, app: &App) {
 				.title("Method")
 				.border_style(Style::default().fg(Color::White)),
 		);
-	f.render_widget(method_widget, chunks[0]);
+	frame.render_widget(method_widget, chunks[0]);
 
-	let url_style = if matches!(app.state, AppState::EditingUrl) {
-		Style::default().fg(Color::Yellow)
-	} else {
-		Style::default().fg(Color::White)
-	};
-
-	let url_text = if app.current_request.url.is_empty() {
-		"Enter URL (press 'u' to edit)"
-	} else {
-		&app.current_request.url
-	};
-
-	let url_widget = Paragraph::new(url_text).style(url_style).block(
-		Block::default()
+	if matches!(app.state, AppState::EditingUrl) {
+		let url_block = Block::default()
 			.borders(Borders::ALL)
-			.title("URL")
-			.border_style(Style::default().fg(Color::White)),
-	);
-	f.render_widget(url_widget, chunks[1]);
-}
+			.title("URL (Editing - Enter to save)")
+			.border_style(Style::default().fg(Color::Yellow));
 
-fn draw_headers_section(f: &mut Frame, area: Rect, app: &App) {
-	let headers_text = if app.current_request.headers.is_empty() {
-		"No headers (press 'h' to add)"
+		let mut url_textarea = app.get_url_textarea().clone();
+		url_textarea.set_block(url_block);
+		frame.render_widget(&url_textarea, chunks[1]);
 	} else {
-		&app.current_request.formatted_headers()
-	};
-
-	let headers_style = if matches!(app.state, AppState::EditingHeaders) {
-		Style::default().fg(Color::Yellow)
-	} else {
-		Style::default().fg(Color::White)
-	};
-
-	let headers_widget = Paragraph::new(headers_text)
-		.style(headers_style)
-		.wrap(Wrap { trim: true })
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title("Headers")
-				.border_style(Style::default().fg(Color::White)),
-		);
-	f.render_widget(headers_widget, area);
-}
-
-fn draw_body_section(f: &mut Frame, area: Rect, app: &App) {
-	let body_text = if app.current_request.body.is_empty() {
-		if app.current_request.has_body() {
-			"Request body (press 'b' to edit)"
+		let url_style = Style::default().fg(Color::White);
+		let url_text = if app.current_request.url.is_empty() {
+			"Enter URL (press 'u' to edit)"
 		} else {
-			"No body for this method"
-		}
-	} else {
-		&app.current_request.body
-	};
+			&app.current_request.url
+		};
 
-	let body_style = if matches!(app.state, AppState::EditingBody) {
-		Style::default().fg(Color::Yellow)
-	} else if app.current_request.has_body() {
-		Style::default().fg(Color::White)
-	} else {
-		Style::default().fg(Color::Gray)
-	};
-
-	let body_widget = Paragraph::new(body_text)
-		.style(body_style)
-		.wrap(Wrap { trim: true })
-		.block(
+		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("Body")
+				.title("URL")
 				.border_style(Style::default().fg(Color::White)),
 		);
-	f.render_widget(body_widget, area);
+		frame.render_widget(url_widget, chunks[1]);
+	}
 }
 
-fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
+fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
+	if matches!(app.state, AppState::EditingHeaders) {
+		let headers_block = Block::default()
+			.borders(Borders::ALL)
+			.title("Headers (Editing - Enter to save)")
+			.border_style(Style::default().fg(Color::Yellow));
+
+		let mut headers_textarea = app.get_headers_textarea().clone();
+		headers_textarea.set_block(headers_block);
+		frame.render_widget(&headers_textarea, area);
+	} else {
+		let headers_text = if app.current_request.headers.is_empty() {
+			"No headers (press 'h' to add)"
+		} else {
+			&app.current_request.formatted_headers()
+		};
+
+		let headers_style = Style::default().fg(Color::White);
+
+		let headers_widget = Paragraph::new(headers_text)
+			.style(headers_style)
+			.wrap(Wrap { trim: true })
+			.block(
+				Block::default()
+					.borders(Borders::ALL)
+					.title("Headers")
+					.border_style(Style::default().fg(Color::White)),
+			);
+		frame.render_widget(headers_widget, area);
+	}
+}
+
+fn draw_body_section(frame: &mut Frame, area: Rect, app: &App) {
+	if matches!(app.state, AppState::EditingBody) {
+		let body_block = Block::default()
+			.borders(Borders::ALL)
+			.title("Body (Editing - Enter to save)")
+			.border_style(Style::default().fg(Color::Yellow));
+
+		let mut body_textarea = app.get_body_textarea().clone();
+		body_textarea.set_block(body_block);
+		frame.render_widget(&body_textarea, area);
+	} else {
+		let body_text = if app.current_request.body.is_empty() {
+			if app.current_request.has_body() {
+				"Request body (press 'b' to edit)"
+			} else {
+				"No body for this method"
+			}
+		} else {
+			&app.current_request.body
+		};
+
+		let body_style = if app.current_request.has_body() {
+			Style::default().fg(Color::White)
+		} else {
+			Style::default().fg(Color::Gray)
+		};
+
+		let body_widget = Paragraph::new(body_text)
+			.style(body_style)
+			.wrap(Wrap { trim: true })
+			.block(
+				Block::default()
+					.borders(Borders::ALL)
+					.title("Body")
+					.border_style(Style::default().fg(Color::White)),
+			);
+		frame.render_widget(body_widget, area);
+	}
+}
+
+fn draw_response_tab(frame: &mut Frame, area: Rect, app: &App) {
 	if let Some(response) = app.get_current_response() {
 		let chunks = Layout::default()
 			.direction(Direction::Vertical)
@@ -220,7 +236,7 @@ fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
 					.title("Status")
 					.border_style(Style::default().fg(Color::White)),
 			);
-		f.render_widget(status_widget, chunks[0]);
+		frame.render_widget(status_widget, chunks[0]);
 
 		let headers_widget = Paragraph::new(response.formatted_headers())
 			.style(Style::default().fg(Color::White))
@@ -231,7 +247,7 @@ fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
 					.title("Response Headers")
 					.border_style(Style::default().fg(Color::White)),
 			);
-		f.render_widget(headers_widget, chunks[1]);
+		frame.render_widget(headers_widget, chunks[1]);
 
 		let body_text = if response.is_json() {
 			response.pretty_json().unwrap_or_else(|_| response.body.clone())
@@ -248,7 +264,7 @@ fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
 					.title("Response Body")
 					.border_style(Style::default().fg(Color::White)),
 			);
-		f.render_widget(body_widget, chunks[2]);
+		frame.render_widget(body_widget, chunks[2]);
 	} else {
 		let no_response = Paragraph::new("No response yet\nSend a request to see the response here")
 			.style(Style::default().fg(Color::Gray))
@@ -259,11 +275,11 @@ fn draw_response_tab(f: &mut Frame, area: Rect, app: &App) {
 					.title("Response")
 					.border_style(Style::default().fg(Color::White)),
 			);
-		f.render_widget(no_response, area);
+		frame.render_widget(no_response, area);
 	}
 }
 
-fn draw_history_tab(f: &mut Frame, area: Rect, app: &App) {
+fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 	if app.responses.is_empty() {
 		let no_history = Paragraph::new("No request history\nSend some requests to see them here")
 			.style(Style::default().fg(Color::Gray))
@@ -274,7 +290,7 @@ fn draw_history_tab(f: &mut Frame, area: Rect, app: &App) {
 					.title("History")
 					.border_style(Style::default().fg(Color::White)),
 			);
-		f.render_widget(no_history, area);
+		frame.render_widget(no_history, area);
 	} else {
 		let items: Vec<ListItem> = app
 			.responses
@@ -315,17 +331,21 @@ fn draw_history_tab(f: &mut Frame, area: Rect, app: &App) {
 			)
 			.highlight_style(Style::default().add_modifier(Modifier::REVERSED));
 
-		f.render_stateful_widget(history_list, area, &mut ratatui::widgets::ListState::default());
+		frame.render_stateful_widget(history_list, area, &mut ratatui::widgets::ListState::default());
 	}
 }
 
-fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
-	let mut help_text = vec![
-		Span::raw("Help: ? | "),
-		Span::raw("Switch tabs: Tab | "),
-		Span::raw("Change method: m/M | "),
-		Span::raw("Send request: Enter"),
-	];
+fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
+	let mut help_text = if matches!(app.input_mode, InputMode::Editing) {
+		vec![
+			Span::raw("Help: ? | "),
+			Span::raw("Switch tabs: Tab | "),
+			Span::raw("Change method: m/M | "),
+			Span::raw("Send request: Enter"),
+		]
+	} else {
+		vec![Span::raw("Editing mode | "), Span::raw("Enter: Save & Exit")]
+	};
 
 	if let Some(error) = &app.error_message {
 		help_text = vec![Span::styled(format!("Error: {error}"), Style::default().fg(Color::Red))];
@@ -339,17 +359,17 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 		.constraints([Constraint::Min(0), Constraint::Length(info_text_area)])
 		.split(area);
 
-	f.render_widget(
+	frame.render_widget(
 		Paragraph::new(Line::from(help_text)).style(Style::default().fg(Color::Yellow)),
 		layout[0],
 	);
-	f.render_widget(
+	frame.render_widget(
 		Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta)),
 		layout[1],
 	);
 }
 
-fn draw_help(f: &mut Frame, area: Rect) {
+fn draw_help(frame: &mut Frame, area: Rect) {
 	let help_text = vec![
 		"resto - HTTP Client Help",
 		"",
@@ -383,43 +403,13 @@ fn draw_help(f: &mut Frame, area: Rect) {
 				.title("Help")
 				.border_style(Style::default().fg(Color::Yellow)),
 		);
-	f.render_widget(help_paragraph, area);
+	frame.render_widget(help_paragraph, area);
 }
 
-fn draw_input_popup(f: &mut Frame, app: &App) {
-	let popup_area = centered_rect(60, 20, f.area());
+fn draw_loading_popup(frame: &mut Frame) {
+	let popup_area = centered_rect(30, 10, frame.area());
 
-	f.render_widget(Clear, popup_area);
-
-	let header_input;
-	let (title, content) = match app.state {
-		AppState::EditingUrl => ("Edit URL", &app.url_input),
-		AppState::EditingBody => ("Edit Body", &app.body_input),
-		AppState::EditingHeaders => {
-			header_input = format!("{}:{}", app.temp_header_key, app.temp_header_value);
-			("Add Header (key:value)", &header_input)
-		}
-		_ => {
-			header_input = String::new();
-			("Input", &header_input)
-		}
-	};
-
-	let popup = Paragraph::new(content.clone())
-		.style(Style::default().fg(Color::Yellow))
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title(title)
-				.border_style(Style::default().fg(Color::Yellow)),
-		);
-	f.render_widget(popup, popup_area);
-}
-
-fn draw_loading_popup(f: &mut Frame) {
-	let popup_area = centered_rect(30, 10, f.area());
-
-	f.render_widget(Clear, popup_area);
+	frame.render_widget(Clear, popup_area);
 
 	let loading = Paragraph::new("Sending request...")
 		.style(Style::default().fg(Color::Yellow))
@@ -430,7 +420,7 @@ fn draw_loading_popup(f: &mut Frame) {
 				.title("Loading")
 				.border_style(Style::default().fg(Color::Yellow)),
 		);
-	f.render_widget(loading, popup_area);
+	frame.render_widget(loading, popup_area);
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
