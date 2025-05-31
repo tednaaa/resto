@@ -102,14 +102,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 	frame.render_widget(method_widget, chunks[0]);
 
 	if matches!(app.state, AppState::EditingUrl) {
-		let url_block = Block::default()
-			.borders(Borders::ALL)
-			.title("URL (Editing - Enter to save)")
-			.border_style(Style::default().fg(Color::Yellow));
-
-		let mut url_textarea = app.get_url_textarea().clone();
-		url_textarea.set_block(url_block);
-		frame.render_widget(&url_textarea, chunks[1]);
+		frame.render_widget(app.get_url_textarea(), chunks[1]);
 	} else {
 		let url_style = Style::default().fg(Color::White);
 		let url_text = if app.current_request.url.is_empty() {
@@ -130,14 +123,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
 	if matches!(app.state, AppState::EditingHeaders) {
-		let headers_block = Block::default()
-			.borders(Borders::ALL)
-			.title("Headers (Editing - Enter to save)")
-			.border_style(Style::default().fg(Color::Yellow));
-
-		let mut headers_textarea = app.get_headers_textarea().clone();
-		headers_textarea.set_block(headers_block);
-		frame.render_widget(&headers_textarea, area);
+		frame.render_widget(app.get_headers_textarea(), area);
 	} else {
 		let headers_text = if app.current_request.headers.is_empty() {
 			"No headers (press 'h' to add)"
@@ -162,14 +148,7 @@ fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_body_section(frame: &mut Frame, area: Rect, app: &App) {
 	if matches!(app.state, AppState::EditingBody) {
-		let body_block = Block::default()
-			.borders(Borders::ALL)
-			.title("Body (Editing - Enter to save)")
-			.border_style(Style::default().fg(Color::Yellow));
-
-		let mut body_textarea = app.get_body_textarea().clone();
-		body_textarea.set_block(body_block);
-		frame.render_widget(&body_textarea, area);
+		frame.render_widget(app.get_body_textarea(), area);
 	} else {
 		let body_text = if app.current_request.body.is_empty() {
 			if app.current_request.has_body() {
@@ -336,15 +315,28 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
+	// Vim mode display
+	let vim_mode_text = if matches!(app.input_mode, InputMode::Editing) {
+		format!("-- {} --", app.get_vim_mode())
+	} else {
+		"-- NORMAL --".to_string()
+	};
+	let vim_mode_width = vim_mode_text.chars().count() as u16 + 2;
+
 	let mut help_text = if matches!(app.input_mode, InputMode::Editing) {
+		vec![
+			Span::raw("Enter/Esc: Save & Exit | "),
+			Span::raw("i: Insert | "),
+			Span::raw("v: Visual | "),
+			Span::raw("q: Exit"),
+		]
+	} else {
 		vec![
 			Span::raw("Help: ? | "),
 			Span::raw("Switch tabs: Tab | "),
 			Span::raw("Change method: m/M | "),
 			Span::raw("Send request: Enter"),
 		]
-	} else {
-		vec![Span::raw("Editing mode | "), Span::raw("Enter: Save & Exit")]
 	};
 
 	if let Some(error) = &app.error_message {
@@ -356,16 +348,29 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 
 	let layout = Layout::default()
 		.direction(Direction::Horizontal)
-		.constraints([Constraint::Min(0), Constraint::Length(info_text_area)])
+		.constraints([
+			Constraint::Length(vim_mode_width),
+			Constraint::Min(0),
+			Constraint::Length(info_text_area),
+		])
 		.split(area);
 
+	// Render vim mode
 	frame.render_widget(
-		Paragraph::new(Line::from(help_text)).style(Style::default().fg(Color::Yellow)),
+		Paragraph::new(Line::from(vim_mode_text)).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
 		layout[0],
 	);
+
+	// Render help text
+	frame.render_widget(
+		Paragraph::new(Line::from(help_text)).style(Style::default().fg(Color::Yellow)),
+		layout[1],
+	);
+
+	// Render version info
 	frame.render_widget(
 		Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta)),
-		layout[1],
+		layout[2],
 	);
 }
 
@@ -385,6 +390,30 @@ fn draw_help(frame: &mut Frame, area: Rect) {
 		"  b             - Edit body",
 		"  m/M           - Change HTTP method (forward/backward)",
 		"  Enter         - Send request",
+		"",
+		"Editing Mode (u/h/b to enter):",
+		"  Enter/Esc       - Save changes and exit to normal mode",
+		"  q               - Exit editing mode (vim quit)",
+		"",
+		"Vim Keybindings (while editing):",
+		"  Normal Mode:",
+		"    i/a/o/O     - Enter insert mode",
+		"    h/j/k/l     - Move cursor (left/down/up/right)",
+		"    w/e/b       - Word navigation",
+		"    ^/$         - Go to line start/end",
+		"    gg/G        - Go to first/last line",
+		"    v/V         - Visual mode (char/line)",
+		"    y/d/c       - Yank/delete/change",
+		"    p           - Paste",
+		"    u/Ctrl+r    - Undo/redo",
+		"    x           - Delete character",
+		"    D/C         - Delete/change to end of line",
+		"  Insert Mode:",
+		"    Esc/Ctrl+c  - Return to vim normal mode",
+		"    (All regular typing)",
+		"  Visual Mode:",
+		"    y/d/c       - Yank/delete/change selection",
+		"    Esc         - Return to vim normal mode",
 		"",
 		"Other:",
 		"  r             - View response",
