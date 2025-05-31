@@ -1,16 +1,8 @@
 // see https://github.com/rhysd/tui-textarea/blob/main/examples/vim.rs
 
-use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
-use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode};
-use ratatui::Terminal;
-use ratatui::backend::CrosstermBackend;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::Style;
 use ratatui::widgets::{Block, Borders};
-use std::env;
 use std::fmt;
-use std::fs;
-use std::io;
-use std::io::BufRead;
 use tui_textarea::{CursorMove, Input, Key, Scrolling, TextArea};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,25 +14,38 @@ pub enum Mode {
 }
 
 impl Mode {
-	pub fn block<'a>(&self) -> Block<'a> {
-		let help = match self {
-			Self::Normal => "type q to quit, type i to enter insert mode",
-			Self::Insert => "type Esc to back to normal mode",
-			Self::Visual => "type y to yank, type d to delete, type Esc to back to normal mode",
-			Self::Operator(_) => "move cursor to apply operator",
+	pub fn block<'a>(self) -> Block<'a> {
+		let title = match self {
+			Self::Normal => "Normal Mode - Enter/Esc: Save & Exit | i: Insert | v: Visual | q: Exit",
+			Self::Insert => "Insert Mode - Enter/Esc: Save & Exit | Type to edit",
+			Self::Visual => "Visual Mode - Enter/Esc: Save & Exit | y: Yank | d: Delete",
+			Self::Operator(_) => "Operator Mode - Enter/Esc: Save & Exit | Move cursor to apply",
 		};
-		let title = format!("{} MODE ({})", self, help);
-		Block::default().borders(Borders::ALL).title(title)
+		Block::default()
+			.borders(Borders::ALL)
+			.title(title)
+			.border_style(ratatui::style::Style::default().fg(self.border_color()))
 	}
 
-	pub fn cursor_style(&self) -> Style {
+	pub const fn border_color(self) -> ratatui::style::Color {
+		match self {
+			Self::Normal => ratatui::style::Color::White,
+			Self::Insert => ratatui::style::Color::Yellow,
+			Self::Visual => ratatui::style::Color::Cyan,
+			Self::Operator(_) => ratatui::style::Color::Green,
+		}
+	}
+
+	pub fn cursor_style(self) -> Style {
 		let color = match self {
-			Self::Normal => Color::Reset,
-			Self::Insert => Color::LightBlue,
-			Self::Visual => Color::LightYellow,
-			Self::Operator(_) => Color::LightGreen,
+			Self::Normal => ratatui::style::Color::Reset,
+			Self::Insert => ratatui::style::Color::LightBlue,
+			Self::Visual => ratatui::style::Color::LightYellow,
+			Self::Operator(_) => ratatui::style::Color::LightGreen,
 		};
-		Style::default().fg(color).add_modifier(Modifier::REVERSED)
+		Style::default()
+			.fg(color)
+			.add_modifier(ratatui::style::Modifier::REVERSED)
 	}
 }
 
@@ -50,7 +55,7 @@ impl fmt::Display for Mode {
 			Self::Normal => write!(f, "NORMAL"),
 			Self::Insert => write!(f, "INSERT"),
 			Self::Visual => write!(f, "VISUAL"),
-			Self::Operator(c) => write!(f, "OPERATOR({})", c),
+			Self::Operator(c) => write!(f, "OPERATOR({c})"),
 		}
 	}
 }
@@ -64,6 +69,7 @@ pub enum Transition {
 }
 
 // State of Vim emulation
+#[derive(Clone)]
 pub struct Vim {
 	pub mode: Mode,
 	pub pending: Input, // Pending input to handle a sequence with two keys like gg
@@ -77,13 +83,14 @@ impl Vim {
 		}
 	}
 
-	pub fn with_pending(self, pending: Input) -> Self {
+	pub const fn with_pending(self, pending: Input) -> Self {
 		Self {
 			mode: self.mode,
 			pending,
 		}
 	}
 
+	#[allow(clippy::too_many_lines)]
 	pub fn transition(&self, input: Input, textarea: &mut TextArea<'_>) -> Transition {
 		if input.key == Key::Null {
 			return Transition::Nop;
@@ -284,7 +291,7 @@ impl Vim {
 						}
 					) =>
 					{
-						textarea.move_cursor(CursorMove::Top)
+						textarea.move_cursor(CursorMove::Top);
 					}
 					Input {
 						key: Key::Char('G'),
