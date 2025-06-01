@@ -318,28 +318,24 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 	let vim_mode_text = format!("-- {} --", app.vim.mode);
 	let vim_mode_width = vim_mode_text.chars().count() as u16 + 2;
 
-	let mut help_text = if matches!(app.input_mode, InputMode::Editing) {
-		vec![
-			Span::raw("Enter/Esc: Save & Exit | "),
-			Span::raw("i: Insert | "),
-			Span::raw("v: Visual | "),
-			Span::raw("q: Exit"),
-		]
+	let info_text = format!("{} v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+	let info_text_area = info_text.chars().count() as u16;
+
+	let vim_mode_widget =
+		Paragraph::new(Line::from(vim_mode_text)).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+
+	let mut keybindings_widget = if matches!(app.input_mode, InputMode::Editing) {
+		Paragraph::new("Save: Enter | Cancel: Escape")
 	} else {
-		vec![
-			Span::raw("Help: ? | "),
-			Span::raw("Switch tabs: Tab | "),
-			Span::raw("Change method: m/M | "),
-			Span::raw("Send request: Enter"),
-		]
-	};
+		Paragraph::new("Help: ? | Switch tabs: Tab | Change method: m/M | Send request: Enter")
+	}
+	.style(Style::default().fg(Color::Yellow));
 
 	if let Some(error) = &app.error_message {
-		help_text = vec![Span::styled(format!("Error: {error}"), Style::default().fg(Color::Red))];
+		keybindings_widget = Paragraph::new(format!("Error: {error}")).style(Style::default().fg(Color::Red));
 	}
 
-	let info_text = format!("resto v{}", env!("CARGO_PKG_VERSION"));
-	let info_text_area = info_text.chars().count() as u16;
+	let info_widget = Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta));
 
 	let layout = Layout::default()
 		.direction(Direction::Horizontal)
@@ -350,23 +346,9 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 		])
 		.split(area);
 
-	// Render vim mode
-	frame.render_widget(
-		Paragraph::new(Line::from(vim_mode_text)).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-		layout[0],
-	);
-
-	// Render help text
-	frame.render_widget(
-		Paragraph::new(Line::from(help_text)).style(Style::default().fg(Color::Yellow)),
-		layout[1],
-	);
-
-	// Render version info
-	frame.render_widget(
-		Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta)),
-		layout[2],
-	);
+	frame.render_widget(vim_mode_widget, layout[0]);
+	frame.render_widget(keybindings_widget, layout[1]);
+	frame.render_widget(info_widget, layout[2]);
 }
 
 fn draw_help(frame: &mut Frame, area: Rect) {
@@ -385,35 +367,6 @@ fn draw_help(frame: &mut Frame, area: Rect) {
 		"  b             - Edit body",
 		"  m/M           - Change HTTP method (forward/backward)",
 		"  Enter         - Send request",
-		"",
-		"Editing Mode (u/h/b to enter):",
-		"  Enter/Esc       - Save changes and exit to normal mode",
-		"  q               - Exit editing mode (vim quit)",
-		"",
-		"Vim Keybindings (while editing):",
-		"  Normal Mode:",
-		"    i/a/o/O     - Enter insert mode",
-		"    h/j/k/l     - Move cursor (left/down/up/right)",
-		"    w/e/b       - Word navigation",
-		"    ^/$         - Go to line start/end",
-		"    gg/G        - Go to first/last line",
-		"    v/V         - Visual mode (char/line)",
-		"    y/d/c       - Yank/delete/change",
-		"    p           - Paste",
-		"    u/Ctrl+r    - Undo/redo",
-		"    x           - Delete character",
-		"    D/C         - Delete/change to end of line",
-		"  Insert Mode:",
-		"    Esc/Ctrl+c  - Return to vim normal mode",
-		"    (All regular typing)",
-		"  Visual Mode:",
-		"    y/d/c       - Yank/delete/change selection",
-		"    Esc         - Return to vim normal mode",
-		"",
-		"Other:",
-		"  r             - View response",
-		"  Ctrl+C        - Clear response",
-		"  ?             - Show/hide this help",
 		"",
 		"Press Esc to close this help screen.",
 	];
