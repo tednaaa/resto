@@ -1,6 +1,6 @@
 // see https://github.com/rhysd/tui-textarea/blob/main/examples/vim.rs
 
-use ratatui::style::Style;
+use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders};
 use std::fmt;
 use tui_textarea::{CursorMove, Input, Key, Scrolling, TextArea};
@@ -21,21 +21,21 @@ impl Mode {
 			.border_style(ratatui::style::Style::default().fg(self.border_color()))
 	}
 
-	pub const fn border_color(self) -> ratatui::style::Color {
+	pub const fn border_color(self) -> Color {
 		match self {
-			Self::Normal => ratatui::style::Color::White,
-			Self::Insert => ratatui::style::Color::Yellow,
-			Self::Visual => ratatui::style::Color::Cyan,
-			Self::Operator(_) => ratatui::style::Color::Green,
+			Self::Normal => Color::Blue,
+			Self::Insert => Color::Yellow,
+			Self::Visual => Color::Cyan,
+			Self::Operator(_) => Color::Green,
 		}
 	}
 
 	pub fn cursor_style(self) -> Style {
 		let color = match self {
-			Self::Normal => ratatui::style::Color::Reset,
-			Self::Insert => ratatui::style::Color::LightBlue,
-			Self::Visual => ratatui::style::Color::LightYellow,
-			Self::Operator(_) => ratatui::style::Color::LightGreen,
+			Self::Normal => Color::Reset,
+			Self::Insert => Color::LightBlue,
+			Self::Visual => Color::LightYellow,
+			Self::Operator(_) => Color::LightGreen,
 		};
 		Style::default()
 			.fg(color)

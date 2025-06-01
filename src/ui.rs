@@ -79,9 +79,14 @@ fn draw_request_tab(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
+	let method_padding = 6;
+
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
-		.constraints([Constraint::Length(10), Constraint::Min(0)])
+		.constraints([
+			Constraint::Length(app.current_request.method.as_str().len() as u16 + method_padding),
+			Constraint::Min(0),
+		])
 		.split(area);
 
 	let method_style = if matches!(app.state, AppState::Normal) {
