@@ -1,5 +1,6 @@
 use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::style::Color;
 use tui_textarea::{Input, TextArea};
 
 use crate::http_client::HttpClient;
@@ -35,7 +36,7 @@ pub enum HttpMethod {
 }
 
 impl HttpMethod {
-	pub const fn as_str(&self) -> &'static str {
+	pub const fn as_str(&self) -> &str {
 		match self {
 			Self::Get => "GET",
 			Self::Post => "POST",
@@ -44,6 +45,18 @@ impl HttpMethod {
 			Self::Patch => "PATCH",
 			Self::Head => "HEAD",
 			Self::Options => "OPTIONS",
+		}
+	}
+
+	pub const fn color(&self) -> Color {
+		match self {
+			Self::Get => Color::Green,
+			Self::Post => Color::Blue,
+			Self::Put => Color::Magenta,
+			Self::Patch => Color::LightMagenta,
+			Self::Delete => Color::Red,
+			Self::Head => Color::Cyan,
+			Self::Options => Color::Yellow,
 		}
 	}
 

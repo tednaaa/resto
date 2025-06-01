@@ -89,14 +89,12 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 		])
 		.split(area);
 
-	let method_style = if matches!(app.state, AppState::Normal) {
-		Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
-	} else {
-		Style::default().fg(Color::Gray)
-	};
-
 	let method_widget = Paragraph::new(app.current_request.method.as_str())
-		.style(method_style)
+		.style(
+			Style::default()
+				.fg(app.current_request.method.color())
+				.add_modifier(Modifier::BOLD),
+		)
 		.alignment(Alignment::Center)
 		.block(
 			Block::default()
