@@ -312,10 +312,14 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 	let vim_mode_text = format!("-- {} --", app.vim.mode);
-	let vim_mode_width = vim_mode_text.chars().count() as u16 + 2;
+	let vim_mode_width = if app.state == AppState::Normal {
+		0
+	} else {
+		vim_mode_text.chars().count() as u16 + 2
+	};
 
 	let info_text = format!("{} v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-	let info_text_area = info_text.chars().count() as u16;
+	let info_text_width = info_text.chars().count() as u16;
 
 	let vim_mode_widget =
 		Paragraph::new(Line::from(vim_mode_text)).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
@@ -338,11 +342,14 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 		.constraints([
 			Constraint::Length(vim_mode_width),
 			Constraint::Min(0),
-			Constraint::Length(info_text_area),
+			Constraint::Length(info_text_width),
 		])
 		.split(area);
 
-	frame.render_widget(vim_mode_widget, layout[0]);
+	if app.state != AppState::Normal {
+		frame.render_widget(vim_mode_widget, layout[0]);
+	}
+
 	frame.render_widget(keybindings_widget, layout[1]);
 	frame.render_widget(info_widget, layout[2]);
 }
