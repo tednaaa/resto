@@ -1,10 +1,12 @@
 use anyhow::Result;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::style::Color;
 use tui_textarea::{Input, TextArea};
 
 use crate::http_client::HttpClient;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
+use crate::vim::{Mode, Transition, Vim};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppState {
@@ -34,7 +36,7 @@ pub enum HttpMethod {
 }
 
 impl HttpMethod {
-	pub const fn as_str(&self) -> &'static str {
+	pub const fn as_str(&self) -> &str {
 		match self {
 			Self::Get => "GET",
 			Self::Post => "POST",
@@ -43,6 +45,18 @@ impl HttpMethod {
 			Self::Patch => "PATCH",
 			Self::Head => "HEAD",
 			Self::Options => "OPTIONS",
+		}
+	}
+
+	pub const fn color(&self) -> Color {
+		match self {
+			Self::Get => Color::Green,
+			Self::Post => Color::Blue,
+			Self::Put => Color::Magenta,
+			Self::Patch => Color::LightMagenta,
+			Self::Delete => Color::Red,
+			Self::Head => Color::Cyan,
+			Self::Options => Color::Yellow,
 		}
 	}
 
@@ -86,6 +100,7 @@ pub struct App {
 	pub loading: bool,
 	pub error_message: Option<String>,
 	pub active_tab: usize, // 0: Request, 1: Response, 2: History
+	pub vim: Vim,
 }
 
 impl App {
@@ -98,6 +113,8 @@ impl App {
 
 		let mut body_textarea = TextArea::default();
 		body_textarea.set_placeholder_text("Request body (JSON, text, etc.)");
+
+		let vim = Vim::new(Mode::Normal);
 
 		Self {
 			state: AppState::Normal,
@@ -112,21 +129,21 @@ impl App {
 			loading: false,
 			error_message: None,
 			active_tab: 0,
+			vim,
 		}
 	}
 
-	pub async fn handle_key_event(&mut self, key: KeyEvent) -> Result<()> {
+	pub async fn handle_key_event(&mut self, key: KeyEvent) -> Result<bool> {
 		match self.input_mode {
-			InputMode::Normal => self.handle_normal_mode_key(key).await?,
-			InputMode::Editing => self.handle_editing_mode_key(key),
+			InputMode::Normal => self.handle_normal_mode_key(key).await,
+			InputMode::Editing => Ok(self.handle_editing_mode_key(key)),
 		}
-		Ok(())
 	}
 
-	async fn handle_normal_mode_key(&mut self, key: KeyEvent) -> Result<()> {
+	async fn handle_normal_mode_key(&mut self, key: KeyEvent) -> Result<bool> {
 		match key.code {
 			KeyCode::Char('q') => {
-				return Ok(());
+				return Ok(true); // Signal quit
 			}
 			KeyCode::Tab => {
 				self.active_tab = (self.active_tab + 1) % 3;
@@ -138,26 +155,44 @@ impl App {
 				self.state = AppState::EditingUrl;
 				self.input_mode = InputMode::Editing;
 				self.url_textarea = TextArea::from([self.current_request.url.as_str()]);
+
+				if self.current_request.url.is_empty() {
+					self.vim = Vim::new(Mode::Insert);
+				} else {
+					self.vim = Vim::new(Mode::Normal);
+				}
+
+				self.setup_textarea_for_vim();
 			}
 			KeyCode::Char('h') => {
 				self.state = AppState::EditingHeaders;
 				self.input_mode = InputMode::Editing;
-				// Initialize textarea with current headers
+
 				let headers_text = self.current_request.formatted_headers();
+
 				self.headers_textarea = if headers_text.is_empty() {
+					self.vim = Vim::new(Mode::Insert);
 					TextArea::default()
 				} else {
+					self.vim = Vim::new(Mode::Normal);
 					TextArea::from(headers_text.lines().collect::<Vec<_>>())
 				};
+
+				self.setup_textarea_for_vim();
 			}
 			KeyCode::Char('b') => {
 				self.state = AppState::EditingBody;
 				self.input_mode = InputMode::Editing;
+
 				self.body_textarea = if self.current_request.body.is_empty() {
+					self.vim = Vim::new(Mode::Insert);
 					TextArea::default()
 				} else {
+					self.vim = Vim::new(Mode::Normal);
 					TextArea::from(self.current_request.body.lines().collect::<Vec<_>>())
 				};
+
+				self.setup_textarea_for_vim();
 			}
 			KeyCode::Char('m') => {
 				self.current_request.method = self.current_request.method.next();
@@ -203,32 +238,75 @@ impl App {
 					}
 				}
 			}
+			KeyCode::Esc => {
+				if matches!(self.state, AppState::Help | AppState::ViewingResponse) {
+					self.state = AppState::Normal;
+				}
+			}
 			_ => {}
 		}
-		Ok(())
+		Ok(false)
 	}
 
-	fn handle_editing_mode_key(&mut self, key: KeyEvent) {
-		match key.code {
-			KeyCode::Enter => {
-				self.state = AppState::Normal;
-				self.input_mode = InputMode::Normal;
+	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> bool {
+		if self.vim.mode == Mode::Normal {
+			match key.code {
+				KeyCode::Enter => {
+					self.save_current_textarea_content();
+					self.state = AppState::Normal;
+					self.input_mode = InputMode::Normal;
+					self.vim = Vim::new(Mode::Normal);
+					return false;
+				}
+				KeyCode::Esc => {
+					self.state = AppState::Normal;
+					self.input_mode = InputMode::Normal;
+					return false;
+				}
+				_ => {}
 			}
-			_ => {}
+		} else if self.state == AppState::EditingUrl && key.code == KeyCode::Enter {
+			self.save_current_textarea_content();
+			self.state = AppState::Normal;
+			self.input_mode = InputMode::Normal;
+			self.vim = Vim::new(Mode::Normal);
+			return false;
 		}
 
-		match self.state {
-			AppState::EditingUrl => {
-				self.url_textarea.input(key.into());
+		let input: Input = key.into();
+
+		let textarea = match self.state {
+			AppState::EditingUrl => &mut self.url_textarea,
+			AppState::EditingHeaders => &mut self.headers_textarea,
+			AppState::EditingBody => &mut self.body_textarea,
+			_ => return false,
+		};
+
+		match self.vim.transition(input, textarea) {
+			Transition::Mode(mode) if self.vim.mode != mode => {
+				let title = match self.state {
+					AppState::EditingUrl => "URL",
+					AppState::EditingHeaders => "Headers",
+					AppState::EditingBody => "Body",
+					_ => return false,
+				};
+
+				textarea.set_block(mode.block(title));
+				textarea.set_cursor_style(mode.cursor_style());
+				self.vim = Vim::new(mode);
 			}
-			AppState::EditingHeaders => {
-				self.headers_textarea.input(key.into());
+			Transition::Nop | Transition::Mode(_) => {}
+			Transition::Pending(pending_input) => {
+				self.vim = self.vim.clone().with_pending(pending_input);
 			}
-			AppState::EditingBody => {
-				self.body_textarea.input(key.into());
+			Transition::Quit => {
+				self.state = AppState::Normal;
+				self.input_mode = InputMode::Normal;
+				self.vim = Vim::new(Mode::Normal);
 			}
-			_ => {}
 		}
+
+		false
 	}
 
 	fn save_current_textarea_content(&mut self) {
@@ -237,7 +315,6 @@ impl App {
 				self.current_request.url = self.url_textarea.lines().join("");
 			}
 			AppState::EditingHeaders => {
-				// Parse headers from textarea
 				self.current_request.headers.clear();
 				for line in self.headers_textarea.lines() {
 					if let Some((key, value)) = line.split_once(':') {
@@ -254,6 +331,25 @@ impl App {
 			}
 			_ => {}
 		}
+	}
+
+	fn setup_textarea_for_vim(&mut self) {
+		let textarea = match self.state {
+			AppState::EditingUrl => &mut self.url_textarea,
+			AppState::EditingHeaders => &mut self.headers_textarea,
+			AppState::EditingBody => &mut self.body_textarea,
+			_ => return,
+		};
+
+		let title = match self.state {
+			AppState::EditingUrl => "URL",
+			AppState::EditingHeaders => "Headers",
+			AppState::EditingBody => "Body",
+			_ => return,
+		};
+
+		textarea.set_block(self.vim.mode.block(title));
+		textarea.set_cursor_style(self.vim.mode.cursor_style());
 	}
 
 	async fn send_request(&mut self) -> Result<()> {

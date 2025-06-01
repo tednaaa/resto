@@ -79,19 +79,22 @@ fn draw_request_tab(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
+	let method_padding = 6;
+
 	let chunks = Layout::default()
 		.direction(Direction::Horizontal)
-		.constraints([Constraint::Length(10), Constraint::Min(0)])
+		.constraints([
+			Constraint::Length(app.current_request.method.as_str().len() as u16 + method_padding),
+			Constraint::Min(0),
+		])
 		.split(area);
 
-	let method_style = if matches!(app.state, AppState::Normal) {
-		Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
-	} else {
-		Style::default().fg(Color::Gray)
-	};
-
 	let method_widget = Paragraph::new(app.current_request.method.as_str())
-		.style(method_style)
+		.style(
+			Style::default()
+				.fg(app.current_request.method.color())
+				.add_modifier(Modifier::BOLD),
+		)
 		.alignment(Alignment::Center)
 		.block(
 			Block::default()
@@ -102,18 +105,11 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 	frame.render_widget(method_widget, chunks[0]);
 
 	if matches!(app.state, AppState::EditingUrl) {
-		let url_block = Block::default()
-			.borders(Borders::ALL)
-			.title("URL (Editing - Enter to save)")
-			.border_style(Style::default().fg(Color::Yellow));
-
-		let mut url_textarea = app.get_url_textarea().clone();
-		url_textarea.set_block(url_block);
-		frame.render_widget(&url_textarea, chunks[1]);
+		frame.render_widget(app.get_url_textarea(), chunks[1]);
 	} else {
 		let url_style = Style::default().fg(Color::White);
 		let url_text = if app.current_request.url.is_empty() {
-			"Enter URL (press 'u' to edit)"
+			""
 		} else {
 			&app.current_request.url
 		};
@@ -121,7 +117,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("URL")
+				.title("URL (press 'u' to edit) ")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(url_widget, chunks[1]);
@@ -130,17 +126,10 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
 	if matches!(app.state, AppState::EditingHeaders) {
-		let headers_block = Block::default()
-			.borders(Borders::ALL)
-			.title("Headers (Editing - Enter to save)")
-			.border_style(Style::default().fg(Color::Yellow));
-
-		let mut headers_textarea = app.get_headers_textarea().clone();
-		headers_textarea.set_block(headers_block);
-		frame.render_widget(&headers_textarea, area);
+		frame.render_widget(app.get_headers_textarea(), area);
 	} else {
 		let headers_text = if app.current_request.headers.is_empty() {
-			"No headers (press 'h' to add)"
+			""
 		} else {
 			&app.current_request.formatted_headers()
 		};
@@ -153,7 +142,7 @@ fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
 			.block(
 				Block::default()
 					.borders(Borders::ALL)
-					.title("Headers")
+					.title("Headers (press 'h' to edit) ")
 					.border_style(Style::default().fg(Color::White)),
 			);
 		frame.render_widget(headers_widget, area);
@@ -162,21 +151,10 @@ fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_body_section(frame: &mut Frame, area: Rect, app: &App) {
 	if matches!(app.state, AppState::EditingBody) {
-		let body_block = Block::default()
-			.borders(Borders::ALL)
-			.title("Body (Editing - Enter to save)")
-			.border_style(Style::default().fg(Color::Yellow));
-
-		let mut body_textarea = app.get_body_textarea().clone();
-		body_textarea.set_block(body_block);
-		frame.render_widget(&body_textarea, area);
+		frame.render_widget(app.get_body_textarea(), area);
 	} else {
 		let body_text = if app.current_request.body.is_empty() {
-			if app.current_request.has_body() {
-				"Request body (press 'b' to edit)"
-			} else {
-				"No body for this method"
-			}
+			""
 		} else {
 			&app.current_request.body
 		};
@@ -193,7 +171,7 @@ fn draw_body_section(frame: &mut Frame, area: Rect, app: &App) {
 			.block(
 				Block::default()
 					.borders(Borders::ALL)
-					.title("Body")
+					.title("Body (press 'b' to edit) ")
 					.border_style(Style::default().fg(Color::White)),
 			);
 		frame.render_widget(body_widget, area);
@@ -336,37 +314,49 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
-	let mut help_text = if matches!(app.input_mode, InputMode::Editing) {
-		vec![
-			Span::raw("Help: ? | "),
-			Span::raw("Switch tabs: Tab | "),
-			Span::raw("Change method: m/M | "),
-			Span::raw("Send request: Enter"),
-		]
+	let should_hide_vim_mode = matches!(app.state, AppState::Normal | AppState::Help);
+
+	let vim_mode_text = format!("-- {} --", app.vim.mode);
+	let vim_mode_width = if should_hide_vim_mode {
+		0
 	} else {
-		vec![Span::raw("Editing mode | "), Span::raw("Enter: Save & Exit")]
+		vim_mode_text.chars().count() as u16 + 2
 	};
 
+	let info_text = format!("{} v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+	let info_text_width = info_text.chars().count() as u16;
+
+	let vim_mode_widget =
+		Paragraph::new(Line::from(vim_mode_text)).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+
+	let mut keybindings_widget = if matches!(app.input_mode, InputMode::Editing) {
+		Paragraph::new("Save: Enter | Cancel: Escape")
+	} else {
+		Paragraph::new("Help: ? | Switch tabs: Tab | Change method: m/M | Send request: Enter")
+	}
+	.style(Style::default().fg(Color::Yellow));
+
 	if let Some(error) = &app.error_message {
-		help_text = vec![Span::styled(format!("Error: {error}"), Style::default().fg(Color::Red))];
+		keybindings_widget = Paragraph::new(format!("Error: {error}")).style(Style::default().fg(Color::Red));
 	}
 
-	let info_text = format!("resto v{}", env!("CARGO_PKG_VERSION"));
-	let info_text_area = info_text.chars().count() as u16;
+	let info_widget = Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta));
 
 	let layout = Layout::default()
 		.direction(Direction::Horizontal)
-		.constraints([Constraint::Min(0), Constraint::Length(info_text_area)])
+		.constraints([
+			Constraint::Length(vim_mode_width),
+			Constraint::Min(0),
+			Constraint::Length(info_text_width),
+		])
 		.split(area);
 
-	frame.render_widget(
-		Paragraph::new(Line::from(help_text)).style(Style::default().fg(Color::Yellow)),
-		layout[0],
-	);
-	frame.render_widget(
-		Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta)),
-		layout[1],
-	);
+	if should_hide_vim_mode {
+		frame.render_widget(vim_mode_widget, layout[0]);
+	}
+
+	frame.render_widget(keybindings_widget, layout[1]);
+	frame.render_widget(info_widget, layout[2]);
 }
 
 fn draw_help(frame: &mut Frame, area: Rect) {
@@ -385,11 +375,6 @@ fn draw_help(frame: &mut Frame, area: Rect) {
 		"  b             - Edit body",
 		"  m/M           - Change HTTP method (forward/backward)",
 		"  Enter         - Send request",
-		"",
-		"Other:",
-		"  r             - View response",
-		"  Ctrl+C        - Clear response",
-		"  ?             - Show/hide this help",
 		"",
 		"Press Esc to close this help screen.",
 	];

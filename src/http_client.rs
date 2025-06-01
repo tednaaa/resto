@@ -15,7 +15,7 @@ impl HttpClient {
 	pub fn new() -> Self {
 		let client = Client::builder()
 			.timeout(Duration::from_secs(30))
-			.user_agent("resto HTTP Client/1.0")
+			.user_agent(format!("{} HTTP Client/1.0", env!("CARGO_PKG_NAME")))
 			.build()
 			.unwrap_or_else(|_| Client::new());
 
