@@ -315,12 +315,7 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
-	// Vim mode display
-	let vim_mode_text = if matches!(app.input_mode, InputMode::Editing) {
-		format!("-- {} --", app.get_vim_mode())
-	} else {
-		"-- NORMAL --".to_string()
-	};
+	let vim_mode_text = format!("-- {} --", app.vim.mode);
 	let vim_mode_width = vim_mode_text.chars().count() as u16 + 2;
 
 	let mut help_text = if matches!(app.input_mode, InputMode::Editing) {

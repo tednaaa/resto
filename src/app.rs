@@ -371,8 +371,4 @@ impl App {
 	pub const fn get_body_textarea(&self) -> &TextArea<'static> {
 		&self.body_textarea
 	}
-
-	pub const fn get_vim_mode(&self) -> &Mode {
-		&self.vim.mode
-	}
 }
