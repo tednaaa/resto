@@ -106,7 +106,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 	} else {
 		let url_style = Style::default().fg(Color::White);
 		let url_text = if app.current_request.url.is_empty() {
-			"Enter URL (press 'u' to edit)"
+			""
 		} else {
 			&app.current_request.url
 		};
@@ -114,7 +114,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("URL")
+				.title("URL (press 'u' to edit) ")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(url_widget, chunks[1]);
@@ -126,7 +126,7 @@ fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
 		frame.render_widget(app.get_headers_textarea(), area);
 	} else {
 		let headers_text = if app.current_request.headers.is_empty() {
-			"No headers (press 'h' to add)"
+			""
 		} else {
 			&app.current_request.formatted_headers()
 		};
@@ -139,7 +139,7 @@ fn draw_headers_section(frame: &mut Frame, area: Rect, app: &App) {
 			.block(
 				Block::default()
 					.borders(Borders::ALL)
-					.title("Headers")
+					.title("Headers (press 'h' to edit) ")
 					.border_style(Style::default().fg(Color::White)),
 			);
 		frame.render_widget(headers_widget, area);
@@ -151,11 +151,7 @@ fn draw_body_section(frame: &mut Frame, area: Rect, app: &App) {
 		frame.render_widget(app.get_body_textarea(), area);
 	} else {
 		let body_text = if app.current_request.body.is_empty() {
-			if app.current_request.has_body() {
-				"Request body (press 'b' to edit)"
-			} else {
-				"No body for this method"
-			}
+			""
 		} else {
 			&app.current_request.body
 		};
@@ -172,7 +168,7 @@ fn draw_body_section(frame: &mut Frame, area: Rect, app: &App) {
 			.block(
 				Block::default()
 					.borders(Borders::ALL)
-					.title("Body")
+					.title("Body (press 'b' to edit) ")
 					.border_style(Style::default().fg(Color::White)),
 			);
 		frame.render_widget(body_widget, area);

@@ -245,9 +245,12 @@ impl App {
 				return false;
 			}
 			KeyCode::Esc => {
-				self.state = AppState::Normal;
-				self.input_mode = InputMode::Normal;
+				if self.vim.mode == Mode::Normal {
+					self.state = AppState::Normal;
+				}
+
 				self.vim = Vim::new(Mode::Normal);
+				self.input_mode = InputMode::Normal;
 				return false;
 			}
 			_ => {}
@@ -264,7 +267,14 @@ impl App {
 
 		match self.vim.transition(input, textarea) {
 			Transition::Mode(mode) if self.vim.mode != mode => {
-				textarea.set_block(mode.block());
+				let title = match self.state {
+					AppState::EditingUrl => "URL",
+					AppState::EditingHeaders => "Headers",
+					AppState::EditingBody => "Body",
+					_ => return false,
+				};
+
+				textarea.set_block(mode.block(title));
 				textarea.set_cursor_style(mode.cursor_style());
 				self.vim = Vim::new(mode);
 			}
@@ -316,7 +326,14 @@ impl App {
 			_ => return,
 		};
 
-		textarea.set_block(self.vim.mode.block());
+		let title = match self.state {
+			AppState::EditingUrl => "URL",
+			AppState::EditingHeaders => "Headers",
+			AppState::EditingBody => "Body",
+			_ => return,
+		};
+
+		textarea.set_block(self.vim.mode.block(title));
 		textarea.set_cursor_style(self.vim.mode.cursor_style());
 	}
 

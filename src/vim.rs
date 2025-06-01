@@ -14,13 +14,7 @@ pub enum Mode {
 }
 
 impl Mode {
-	pub fn block<'a>(self) -> Block<'a> {
-		let title = match self {
-			Self::Normal => "Normal Mode - Enter/Esc: Save & Exit | i: Insert | v: Visual | q: Exit",
-			Self::Insert => "Insert Mode - Enter/Esc: Save & Exit | Type to edit",
-			Self::Visual => "Visual Mode - Enter/Esc: Save & Exit | y: Yank | d: Delete",
-			Self::Operator(_) => "Operator Mode - Enter/Esc: Save & Exit | Move cursor to apply",
-		};
+	pub fn block(self, title: &str) -> Block<'_> {
 		Block::default()
 			.borders(Borders::ALL)
 			.title(title)
