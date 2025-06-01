@@ -236,24 +236,22 @@ impl App {
 	}
 
 	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> bool {
-		match key.code {
-			KeyCode::Enter => {
-				self.save_current_textarea_content();
-				self.state = AppState::Normal;
-				self.input_mode = InputMode::Normal;
-				self.vim = Vim::new(Mode::Normal);
-				return false;
-			}
-			KeyCode::Esc => {
-				if self.vim.mode == Mode::Normal {
+		if self.vim.mode == Mode::Normal {
+			match key.code {
+				KeyCode::Enter => {
+					self.save_current_textarea_content();
 					self.state = AppState::Normal;
+					self.input_mode = InputMode::Normal;
+					self.vim = Vim::new(Mode::Normal);
+					return false;
 				}
-
-				self.vim = Vim::new(Mode::Normal);
-				self.input_mode = InputMode::Normal;
-				return false;
+				KeyCode::Esc => {
+					self.state = AppState::Normal;
+					self.input_mode = InputMode::Normal;
+					return false;
+				}
+				_ => {}
 			}
-			_ => {}
 		}
 
 		let input: Input = key.into();
@@ -299,7 +297,6 @@ impl App {
 				self.current_request.url = self.url_textarea.lines().join("");
 			}
 			AppState::EditingHeaders => {
-				// Parse headers from textarea
 				self.current_request.headers.clear();
 				for line in self.headers_textarea.lines() {
 					if let Some((key, value)) = line.split_once(':') {
