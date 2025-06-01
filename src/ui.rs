@@ -314,8 +314,10 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
+	let should_hide_vim_mode = matches!(app.state, AppState::Normal | AppState::Help);
+
 	let vim_mode_text = format!("-- {} --", app.vim.mode);
-	let vim_mode_width = if app.state == AppState::Normal {
+	let vim_mode_width = if should_hide_vim_mode {
 		0
 	} else {
 		vim_mode_text.chars().count() as u16 + 2
@@ -349,7 +351,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 		])
 		.split(area);
 
-	if app.state != AppState::Normal {
+	if should_hide_vim_mode {
 		frame.render_widget(vim_mode_widget, layout[0]);
 	}
 
