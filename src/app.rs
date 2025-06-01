@@ -142,31 +142,43 @@ impl App {
 				self.state = AppState::EditingUrl;
 				self.input_mode = InputMode::Editing;
 				self.url_textarea = TextArea::from([self.current_request.url.as_str()]);
-				self.vim = Vim::new(Mode::Normal);
+
+				if self.current_request.url.is_empty() {
+					self.vim = Vim::new(Mode::Insert);
+				} else {
+					self.vim = Vim::new(Mode::Normal);
+				}
+
 				self.setup_textarea_for_vim();
 			}
 			KeyCode::Char('h') => {
 				self.state = AppState::EditingHeaders;
 				self.input_mode = InputMode::Editing;
-				// Initialize textarea with current headers
+
 				let headers_text = self.current_request.formatted_headers();
+
 				self.headers_textarea = if headers_text.is_empty() {
+					self.vim = Vim::new(Mode::Insert);
 					TextArea::default()
 				} else {
+					self.vim = Vim::new(Mode::Normal);
 					TextArea::from(headers_text.lines().collect::<Vec<_>>())
 				};
-				self.vim = Vim::new(Mode::Normal);
+
 				self.setup_textarea_for_vim();
 			}
 			KeyCode::Char('b') => {
 				self.state = AppState::EditingBody;
 				self.input_mode = InputMode::Editing;
+
 				self.body_textarea = if self.current_request.body.is_empty() {
+					self.vim = Vim::new(Mode::Insert);
 					TextArea::default()
 				} else {
+					self.vim = Vim::new(Mode::Normal);
 					TextArea::from(self.current_request.body.lines().collect::<Vec<_>>())
 				};
-				self.vim = Vim::new(Mode::Normal);
+
 				self.setup_textarea_for_vim();
 			}
 			KeyCode::Char('m') => {
@@ -224,10 +236,8 @@ impl App {
 	}
 
 	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> bool {
-		// Handle special keys before vim processing
 		match key.code {
 			KeyCode::Enter => {
-				// Save and exit edit mode
 				self.save_current_textarea_content();
 				self.state = AppState::Normal;
 				self.input_mode = InputMode::Normal;
