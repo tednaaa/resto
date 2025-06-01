@@ -252,6 +252,12 @@ impl App {
 				}
 				_ => {}
 			}
+		} else if self.state == AppState::EditingUrl && key.code == KeyCode::Enter {
+			self.save_current_textarea_content();
+			self.state = AppState::Normal;
+			self.input_mode = InputMode::Normal;
+			self.vim = Vim::new(Mode::Normal);
+			return false;
 		}
 
 		let input: Input = key.into();
@@ -281,7 +287,6 @@ impl App {
 				self.vim = self.vim.clone().with_pending(pending_input);
 			}
 			Transition::Quit => {
-				self.save_current_textarea_content();
 				self.state = AppState::Normal;
 				self.input_mode = InputMode::Normal;
 				self.vim = Vim::new(Mode::Normal);

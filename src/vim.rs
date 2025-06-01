@@ -213,9 +213,6 @@ impl Vim {
 						return Transition::Mode(Mode::Insert);
 					}
 					Input {
-						key: Key::Char('q'), ..
-					} => return Transition::Quit,
-					Input {
 						key: Key::Char('e'),
 						ctrl: true,
 						..
