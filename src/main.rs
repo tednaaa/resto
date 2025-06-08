@@ -1,6 +1,6 @@
 use anyhow::Result;
 use ratatui::{
-	Terminal, 
+	Terminal,
 	backend::CrosstermBackend,
 	crossterm::{
 		event::{self, DisableMouseCapture, EnableMouseCapture},
@@ -11,8 +11,8 @@ use ratatui::{
 use std::io;
 use std::time::Duration;
 
-
 mod app;
+mod curl;
 mod http_client;
 mod request;
 mod response;

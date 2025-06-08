@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::app::HttpMethod;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct HttpRequest {
 	pub id: String,
 	pub method: HttpMethod,
