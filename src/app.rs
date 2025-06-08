@@ -358,6 +358,7 @@ impl App {
 			_ => {}
 		}
 
+		textarea.set_tab_length(2);
 		textarea.set_block(self.vim.mode.block(title));
 		textarea.set_cursor_style(self.vim.mode.cursor_style());
 	}
