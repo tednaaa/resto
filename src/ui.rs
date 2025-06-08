@@ -327,7 +327,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 	let info_text_width = info_text.chars().count() as u16;
 
 	let vim_mode_widget =
-		Paragraph::new(Line::from(vim_mode_text)).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+		Paragraph::new(vim_mode_text).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
 
 	let mut keybindings_widget = if matches!(app.input_mode, InputMode::Editing) {
 		Paragraph::new("Save: Enter | Cancel: Escape")
@@ -340,7 +340,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 		keybindings_widget = Paragraph::new(format!("Error: {error}")).style(Style::default().fg(Color::Red));
 	}
 
-	let info_widget = Paragraph::new(Line::from(info_text)).style(Style::default().fg(Color::Magenta));
+	let info_widget = Paragraph::new(info_text).style(Style::default().fg(Color::Magenta));
 
 	let layout = Layout::default()
 		.direction(Direction::Horizontal)
