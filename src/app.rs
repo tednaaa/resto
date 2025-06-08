@@ -1,6 +1,6 @@
 use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::style::Color;
+use ratatui::style::{Color, Style};
 use tui_textarea::{Input, TextArea};
 
 use crate::http_client::HttpClient;
@@ -105,14 +105,9 @@ pub struct App {
 
 impl App {
 	pub fn new() -> Self {
-		let mut url_textarea = TextArea::default();
-		url_textarea.set_placeholder_text("Enter URL...");
-
-		let mut headers_textarea = TextArea::default();
-		headers_textarea.set_placeholder_text("key: value\nkey2: value2");
-
-		let mut body_textarea = TextArea::default();
-		body_textarea.set_placeholder_text("Request body (JSON, text, etc.)");
+		let url_textarea = TextArea::default();
+		let headers_textarea = TextArea::default();
+		let body_textarea = TextArea::default();
 
 		let vim = Vim::new(Mode::Normal);
 
@@ -347,6 +342,21 @@ impl App {
 			AppState::EditingBody => "Body",
 			_ => return,
 		};
+
+		match self.state {
+			AppState::EditingUrl => {
+				textarea.set_placeholder_text("Enter URL...");
+			}
+			AppState::EditingHeaders => {
+				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
+				textarea.set_placeholder_text("key: value\n\nkey2: value2");
+			}
+			AppState::EditingBody => {
+				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
+				textarea.set_placeholder_text("Request body (JSON, text, etc.)");
+			}
+			_ => {}
+		}
 
 		textarea.set_block(self.vim.mode.block(title));
 		textarea.set_cursor_style(self.vim.mode.cursor_style());
