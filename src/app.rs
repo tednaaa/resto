@@ -3,6 +3,7 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
 use tui_textarea::{Input, TextArea};
 
+use crate::curl::parse_curl;
 use crate::http_client::HttpClient;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
@@ -33,6 +34,23 @@ pub enum HttpMethod {
 	Patch,
 	Head,
 	Options,
+}
+
+impl std::str::FromStr for HttpMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s.to_uppercase().as_str() {
+			"GET" => Ok(HttpMethod::Get),
+			"POST" => Ok(HttpMethod::Post),
+			"PUT" => Ok(HttpMethod::Put),
+			"DELETE" => Ok(HttpMethod::Delete),
+			"PATCH" => Ok(HttpMethod::Patch),
+			"HEAD" => Ok(HttpMethod::Head),
+			"OPTIONS" => Ok(HttpMethod::Options),
+			_ => Err(format!("Unknown HTTP method: {}", s)),
+		}
+	}
 }
 
 impl HttpMethod {
@@ -304,10 +322,10 @@ impl App {
 		false
 	}
 
-	fn save_current_textarea_content(&mut self) {
+	fn save_current_textarea_content(&mut self) -> anyhow::Result<()> {
 		match self.state {
 			AppState::EditingUrl => {
-				self.current_request.url = self.url_textarea.lines().join("");
+				self.current_request = parse_curl(self.url_textarea.lines().join("").as_str())?;
 			}
 			AppState::EditingHeaders => {
 				self.current_request.headers.clear();
@@ -326,6 +344,8 @@ impl App {
 			}
 			_ => {}
 		}
+
+		Ok(())
 	}
 
 	fn setup_textarea_for_vim(&mut self) {
