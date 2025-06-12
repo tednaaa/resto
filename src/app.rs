@@ -358,7 +358,7 @@ impl App {
 
 		match self.state {
 			AppState::EditingUrl => {
-				textarea.set_placeholder_text("Enter URL...");
+				textarea.set_placeholder_text("Enter URL... or paste curl");
 			}
 			AppState::EditingHeaders => {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
