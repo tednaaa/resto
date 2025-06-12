@@ -79,7 +79,7 @@ impl HttpResponse {
 			.join("\n")
 	}
 
-	pub fn pretty_json(&self) -> Result<String, serde_json::Error> {
+	pub fn pretty_json(&self) -> anyhow::Result<String, serde_json::Error> {
 		if self.is_json() {
 			let json_value: serde_json::Value = serde_json::from_str(&self.body)?;
 			serde_json::to_string_pretty(&json_value)

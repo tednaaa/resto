@@ -44,7 +44,7 @@ impl Mode {
 }
 
 impl fmt::Display for Mode {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> anyhow::Result<(), fmt::Error> {
 		match self {
 			Self::Normal => write!(f, "NORMAL"),
 			Self::Insert => write!(f, "INSERT"),

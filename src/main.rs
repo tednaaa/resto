@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
 	Ok(())
 }
 
-async fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App) -> Result<()> {
+async fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App) -> anyhow::Result<()> {
 	loop {
 		terminal.draw(|frame| ui::draw(frame, app))?;
 
