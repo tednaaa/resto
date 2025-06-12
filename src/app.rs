@@ -318,7 +318,13 @@ impl App {
 	fn save_current_textarea_content(&mut self) -> anyhow::Result<()> {
 		match self.state {
 			AppState::EditingUrl => {
-				self.current_request = parse_curl(self.url_textarea.lines().join("").as_str())?;
+				let url_text = self.url_textarea.lines().join("");
+
+				if url_text.starts_with("curl") {
+					self.current_request = parse_curl(&url_text)?;
+				} else {
+					self.current_request.url = url_text;
+				}
 			}
 			AppState::EditingHeaders => {
 				self.current_request.headers.clear();
