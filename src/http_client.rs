@@ -22,7 +22,7 @@ impl HttpClient {
 		Self { client }
 	}
 
-	pub async fn send_request(&self, request: &HttpRequest) -> Result<HttpResponse> {
+	pub async fn send_request(&self, request: &HttpRequest) -> anyhow::Result<HttpResponse> {
 		let start_time = Instant::now();
 
 		let method = self.convert_method(&request.method);

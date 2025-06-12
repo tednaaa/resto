@@ -3,6 +3,7 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
 use tui_textarea::{Input, TextArea};
 
+use crate::curl::parse_curl;
 use crate::http_client::HttpClient;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
@@ -33,6 +34,23 @@ pub enum HttpMethod {
 	Patch,
 	Head,
 	Options,
+}
+
+impl std::str::FromStr for HttpMethod {
+	type Err = String;
+
+	fn from_str(s: &str) -> anyhow::Result<Self, Self::Err> {
+		match s.to_uppercase().as_str() {
+			"GET" => Ok(Self::Get),
+			"POST" => Ok(Self::Post),
+			"PUT" => Ok(Self::Put),
+			"DELETE" => Ok(Self::Delete),
+			"PATCH" => Ok(Self::Patch),
+			"HEAD" => Ok(Self::Head),
+			"OPTIONS" => Ok(Self::Options),
+			_ => Err(format!("Unknown HTTP method: {s}")),
+		}
+	}
 }
 
 impl HttpMethod {
@@ -128,14 +146,14 @@ impl App {
 		}
 	}
 
-	pub async fn handle_key_event(&mut self, key: KeyEvent) -> Result<bool> {
+	pub async fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		match self.input_mode {
 			InputMode::Normal => self.handle_normal_mode_key(key).await,
-			InputMode::Editing => Ok(self.handle_editing_mode_key(key)),
+			InputMode::Editing => self.handle_editing_mode_key(key),
 		}
 	}
 
-	async fn handle_normal_mode_key(&mut self, key: KeyEvent) -> Result<bool> {
+	async fn handle_normal_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		match key.code {
 			KeyCode::Char('q') => {
 				return Ok(true); // Signal quit
@@ -243,29 +261,22 @@ impl App {
 		Ok(false)
 	}
 
-	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> bool {
+	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		if self.vim.mode == Mode::Normal {
 			match key.code {
 				KeyCode::Enter => {
-					self.save_current_textarea_content();
+					self.save_current_textarea_content()?;
 					self.state = AppState::Normal;
 					self.input_mode = InputMode::Normal;
-					self.vim = Vim::new(Mode::Normal);
-					return false;
+					return Ok(false);
 				}
 				KeyCode::Esc => {
 					self.state = AppState::Normal;
 					self.input_mode = InputMode::Normal;
-					return false;
+					return Ok(false);
 				}
 				_ => {}
 			}
-		} else if self.state == AppState::EditingUrl && key.code == KeyCode::Enter {
-			self.save_current_textarea_content();
-			self.state = AppState::Normal;
-			self.input_mode = InputMode::Normal;
-			self.vim = Vim::new(Mode::Normal);
-			return false;
 		}
 
 		let input: Input = key.into();
@@ -274,7 +285,7 @@ impl App {
 			AppState::EditingUrl => &mut self.url_textarea,
 			AppState::EditingHeaders => &mut self.headers_textarea,
 			AppState::EditingBody => &mut self.body_textarea,
-			_ => return false,
+			_ => return Ok(false),
 		};
 
 		match self.vim.transition(input, textarea) {
@@ -283,7 +294,7 @@ impl App {
 					AppState::EditingUrl => "URL",
 					AppState::EditingHeaders => "Headers",
 					AppState::EditingBody => "Body",
-					_ => return false,
+					_ => return Ok(false),
 				};
 
 				textarea.set_block(mode.block(title));
@@ -301,13 +312,13 @@ impl App {
 			}
 		}
 
-		false
+		Ok(false)
 	}
 
-	fn save_current_textarea_content(&mut self) {
+	fn save_current_textarea_content(&mut self) -> anyhow::Result<()> {
 		match self.state {
 			AppState::EditingUrl => {
-				self.current_request.url = self.url_textarea.lines().join("");
+				self.current_request = parse_curl(self.url_textarea.lines().join("").as_str())?;
 			}
 			AppState::EditingHeaders => {
 				self.current_request.headers.clear();
@@ -326,6 +337,8 @@ impl App {
 			}
 			_ => {}
 		}
+
+		Ok(())
 	}
 
 	fn setup_textarea_for_vim(&mut self) {
@@ -345,7 +358,7 @@ impl App {
 
 		match self.state {
 			AppState::EditingUrl => {
-				textarea.set_placeholder_text("Enter URL...");
+				textarea.set_placeholder_text("Enter URL... or paste curl");
 			}
 			AppState::EditingHeaders => {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
@@ -363,7 +376,7 @@ impl App {
 		textarea.set_cursor_style(self.vim.mode.cursor_style());
 	}
 
-	async fn send_request(&mut self) -> Result<()> {
+	async fn send_request(&mut self) -> anyhow::Result<()> {
 		if self.current_request.url.is_empty() {
 			self.error_message = Some("URL cannot be empty".to_string());
 			return Ok(());
@@ -389,7 +402,7 @@ impl App {
 
 	// TODO: Handle any background updates here
 	#[allow(clippy::unused_async, clippy::needless_pass_by_ref_mut)]
-	pub async fn update(&mut self) -> Result<()> {
+	pub async fn update(&mut self) -> anyhow::Result<()> {
 		Ok(())
 	}
 
