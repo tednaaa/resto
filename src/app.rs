@@ -6,7 +6,7 @@ use crate::curl::parse_curl;
 use crate::http_client::HttpClient;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
-use crate::ui::MainContentTab;
+use crate::ui::{MainContentTab, RequestSectionTab, ResponseSectionTab};
 use crate::vim::{Mode, Transition, Vim};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -90,7 +90,7 @@ impl HttpMethod {
 		}
 	}
 
-	pub const fn prev(&self) -> Self {
+	pub const fn previous(&self) -> Self {
 		match self {
 			Self::Get => Self::Options,
 			Self::Post => Self::Get,
@@ -117,7 +117,11 @@ pub struct App {
 	pub http_client: HttpClient,
 	pub loading: bool,
 	pub error_message: Option<String>,
+
 	pub active_tab: MainContentTab,
+	pub request_section_active_tab: RequestSectionTab,
+	pub response_section_active_tab: ResponseSectionTab,
+
 	pub vim: Vim,
 }
 
@@ -142,6 +146,8 @@ impl App {
 			loading: false,
 			error_message: None,
 			active_tab: MainContentTab::Request,
+			request_section_active_tab: RequestSectionTab::Headers,
+			response_section_active_tab: ResponseSectionTab::Body,
 			vim,
 		}
 	}
@@ -159,6 +165,34 @@ impl App {
 			current_index - 1
 		};
 		self.active_tab = MainContentTab::from_index(previous_index).unwrap_or(MainContentTab::Request);
+	}
+
+	fn request_section_next_tab(&mut self) {
+		let next_index = (self.request_section_active_tab.as_index() + 1) % RequestSectionTab::TABS.len();
+		self.request_section_active_tab = RequestSectionTab::from_index(next_index).unwrap_or(RequestSectionTab::Body);
+	}
+
+	fn request_section_previous_tab(&mut self) {
+		let previous_index = if self.request_section_active_tab.as_index() == 0 {
+			RequestSectionTab::TABS.len() - 1
+		} else {
+			self.request_section_active_tab.as_index() - 1
+		};
+		self.request_section_active_tab = RequestSectionTab::from_index(previous_index).unwrap_or(RequestSectionTab::Body);
+	}
+
+	fn response_section_next_tab(&mut self) {
+		let next_index = (self.response_section_active_tab.as_index() + 1) % ResponseSectionTab::TABS.len();
+		self.response_section_active_tab = ResponseSectionTab::from_index(next_index).unwrap_or(ResponseSectionTab::Headers);
+	}
+
+	fn response_section_previous_tab(&mut self) {
+		let previous_index = if self.response_section_active_tab.as_index() == 0 {
+			ResponseSectionTab::TABS.len() - 1
+		} else {
+			self.response_section_active_tab.as_index() - 1
+		};
+		self.response_section_active_tab = ResponseSectionTab::from_index(previous_index).unwrap_or(ResponseSectionTab::Headers);
 	}
 
 	pub async fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
@@ -187,6 +221,10 @@ impl App {
 			}
 			KeyCode::Tab => self.next_tab(),
 			KeyCode::BackTab => self.previous_tab(),
+			KeyCode::Char(']') => self.request_section_next_tab(),
+			KeyCode::Char('[') => self.request_section_previous_tab(),
+			KeyCode::Char('}') => self.response_section_next_tab(),
+			KeyCode::Char('{') => self.response_section_previous_tab(),
 			KeyCode::Char('u') => {
 				self.state = AppState::EditingUrl;
 				self.input_mode = InputMode::Editing;
@@ -234,7 +272,7 @@ impl App {
 				self.current_request.method = self.current_request.method.next();
 			}
 			KeyCode::Char('M') => {
-				self.current_request.method = self.current_request.method.prev();
+				self.current_request.method = self.current_request.method.previous();
 			}
 			KeyCode::Enter => {
 				if !self.loading {
