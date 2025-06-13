@@ -1,4 +1,3 @@
-use anyhow::Result;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
 use tui_textarea::{Input, TextArea};

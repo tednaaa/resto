@@ -1,4 +1,3 @@
-use anyhow::Result;
 use reqwest::{Client, Method};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
