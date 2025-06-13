@@ -351,10 +351,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 		])
 		.split(area);
 
-	if should_hide_vim_mode {
-		frame.render_widget(vim_mode_widget, layout[0]);
-	}
-
+	frame.render_widget(vim_mode_widget, layout[0]);
 	frame.render_widget(keybindings_widget, layout[1]);
 	frame.render_widget(info_widget, layout[2]);
 }
