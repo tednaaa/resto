@@ -3,7 +3,7 @@ use ratatui::{
 	Terminal,
 	backend::CrosstermBackend,
 	crossterm::{
-		event::{self, DisableMouseCapture, EnableMouseCapture},
+		event::{DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture, Event, poll, read},
 		execute,
 		terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 	},
@@ -25,7 +25,7 @@ use app::App;
 async fn main() -> Result<()> {
 	enable_raw_mode()?;
 	let mut stdout = io::stdout();
-	execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+	execute!(stdout, EnterAlternateScreen, EnableMouseCapture, EnableBracketedPaste)?;
 	let backend = CrosstermBackend::new(stdout);
 	let mut terminal = Terminal::new(backend)?;
 
@@ -47,11 +47,19 @@ async fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app
 	loop {
 		terminal.draw(|frame| ui::draw(frame, app))?;
 
-		if event::poll(Duration::from_millis(100))? {
-			if let ratatui::crossterm::event::Event::Key(key) = event::read()? {
-				let should_quit = app.handle_key_event(key).await?;
-				if should_quit {
-					return Ok(());
+		if poll(Duration::from_millis(100))? {
+			if let Ok(event) = read() {
+				match event {
+					Event::Key(key) => {
+						let should_quit = app.handle_key_event(key).await?;
+						if should_quit {
+							return Ok(());
+						}
+					}
+					Event::Paste(text) => {
+						app.handle_paste(text)?;
+					}
+					_ => {}
 				}
 			}
 		}

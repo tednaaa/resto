@@ -1,3 +1,4 @@
+use crossterm::event::Event;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
 use tui_textarea::{Input, TextArea};
@@ -150,6 +151,18 @@ impl App {
 			InputMode::Normal => self.handle_normal_mode_key(key).await,
 			InputMode::Editing => self.handle_editing_mode_key(key),
 		}
+	}
+
+	pub fn handle_paste(&mut self, text: String) -> anyhow::Result<()> {
+		if self.state == AppState::EditingUrl {
+			self.url_textarea.insert_str(text);
+			self.save_current_textarea_content()?;
+			self.state = AppState::Normal;
+			self.input_mode = InputMode::Normal;
+			self.vim = Vim::new(Mode::Normal);
+		}
+
+		Ok(())
 	}
 
 	async fn handle_normal_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
@@ -317,7 +330,7 @@ impl App {
 	fn save_current_textarea_content(&mut self) -> anyhow::Result<()> {
 		match self.state {
 			AppState::EditingUrl => {
-				let url_text = self.url_textarea.lines().join("");
+				let url_text = self.url_textarea.lines().join("").trim().to_owned();
 
 				if url_text.starts_with("curl") {
 					self.current_request = parse_curl(&url_text)?;
