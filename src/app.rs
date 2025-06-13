@@ -418,7 +418,6 @@ impl App {
 			Ok(response) => {
 				self.responses.push(response);
 				self.selected_response = Some(self.responses.len() - 1);
-				self.active_tab = MainContentTab::Response;
 			}
 			Err(error) => {
 				self.error_message = Some(format!("Request failed: {error}"));

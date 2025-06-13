@@ -32,17 +32,15 @@ pub fn draw(frame: &mut Frame, app: &App) {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MainContentTab {
 	Request,
-	Response,
 	History,
 }
 
 impl MainContentTab {
-	pub const TABS: &'static [Self] = &[Self::Request, Self::Response, Self::History];
+	pub const TABS: &'static [Self] = &[Self::Request, Self::History];
 
 	const fn as_str(&self) -> &'static str {
 		match self {
 			Self::Request => "Request",
-			Self::Response => "Response",
 			Self::History => "History",
 		}
 	}
@@ -50,16 +48,14 @@ impl MainContentTab {
 	pub const fn as_index(&self) -> usize {
 		match self {
 			Self::Request => 0,
-			Self::Response => 1,
-			Self::History => 2,
+			Self::History => 1,
 		}
 	}
 
 	pub const fn from_index(index: usize) -> Option<Self> {
 		match index {
 			0 => Some(Self::Request),
-			1 => Some(Self::Response),
-			2 => Some(Self::History),
+			1 => Some(Self::History),
 			_ => None,
 		}
 	}
@@ -91,7 +87,7 @@ fn draw_main_content(frame: &mut Frame, area: Rect, app: &App) {
 
 	match app.active_tab {
 		MainContentTab::Request => draw_request_tab(frame, chunks[1], app),
-		MainContentTab::Response => draw_response_tab(frame, chunks[1], app),
+		// MainContentTab::Response => draw_response_tab(frame, chunks[1], app),
 		MainContentTab::History => draw_history_tab(frame, chunks[1], app),
 	}
 }
