@@ -29,16 +29,50 @@ pub fn draw(frame: &mut Frame, app: &App) {
 	}
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MainContentTab {
+	Request,
+	Response,
+	History,
+}
+
+impl MainContentTab {
+	pub const TABS: &'static [Self] = &[Self::Request, Self::Response, Self::History];
+
+	const fn as_str(&self) -> &'static str {
+		match self {
+			Self::Request => "Request",
+			Self::Response => "Response",
+			Self::History => "History",
+		}
+	}
+
+	pub const fn as_index(&self) -> usize {
+		match self {
+			Self::Request => 0,
+			Self::Response => 1,
+			Self::History => 2,
+		}
+	}
+
+	pub const fn from_index(index: usize) -> Option<Self> {
+		match index {
+			0 => Some(Self::Request),
+			1 => Some(Self::Response),
+			2 => Some(Self::History),
+			_ => None,
+		}
+	}
+}
+
 fn draw_main_content(frame: &mut Frame, area: Rect, app: &App) {
-	let tabs = ["Request", "Response", "History"];
-	let tab_titles: Vec<Line> = tabs
+	let tab_titles: Vec<Line> = MainContentTab::TABS
 		.iter()
-		.enumerate()
-		.map(|(i, &tab)| {
-			if i == app.active_tab {
-				Line::from(Span::styled(tab, Style::default().fg(Color::Yellow)))
+		.map(|tab| {
+			if tab == &app.active_tab {
+				Line::from(Span::styled(tab.as_str(), Style::default().fg(Color::Yellow)))
 			} else {
-				Line::from(Span::styled(tab, Style::default().fg(Color::Gray)))
+				Line::from(Span::styled(tab.as_str(), Style::default().fg(Color::Gray)))
 			}
 		})
 		.collect();
@@ -46,7 +80,7 @@ fn draw_main_content(frame: &mut Frame, area: Rect, app: &App) {
 	let tabs_widget = Tabs::new(tab_titles)
 		.block(Block::default().borders(Borders::ALL).title("Tabs"))
 		.highlight_style(Style::default().fg(Color::Yellow))
-		.select(app.active_tab);
+		.select(app.active_tab.as_index());
 
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
@@ -56,10 +90,9 @@ fn draw_main_content(frame: &mut Frame, area: Rect, app: &App) {
 	frame.render_widget(tabs_widget, chunks[0]);
 
 	match app.active_tab {
-		0 => draw_request_tab(frame, chunks[1], app),
-		1 => draw_response_tab(frame, chunks[1], app),
-		2 => draw_history_tab(frame, chunks[1], app),
-		_ => {}
+		MainContentTab::Request => draw_request_tab(frame, chunks[1], app),
+		MainContentTab::Response => draw_response_tab(frame, chunks[1], app),
+		MainContentTab::History => draw_history_tab(frame, chunks[1], app),
 	}
 }
 
