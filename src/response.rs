@@ -1,3 +1,4 @@
+use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
@@ -53,9 +54,7 @@ impl HttpResponse {
 	}
 
 	pub fn content_type(&self) -> Option<&String> {
-		self.headers
-			.get("content-type")
-			.or_else(|| self.headers.get("Content-Type"))
+		self.headers.get("content-type").or_else(|| self.headers.get("Content-Type"))
 	}
 
 	pub fn is_json(&self) -> bool {
@@ -98,13 +97,13 @@ impl HttpResponse {
 		}
 	}
 
-	pub const fn status_color(&self) -> &'static str {
+	pub const fn status_color(&self) -> Color {
 		match self.status_code {
-			200..=299 => "green",
-			300..=399 => "yellow",
-			400..=499 => "red",
-			500..=599 => "magenta",
-			_ => "white",
+			200..=299 => Color::Green,
+			300..=399 => Color::Yellow,
+			400..=499 => Color::Red,
+			500..=599 => Color::Magenta,
+			_ => Color::White,
 		}
 	}
 }

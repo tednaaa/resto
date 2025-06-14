@@ -37,9 +37,7 @@ impl Mode {
 			Self::Visual => Color::LightYellow,
 			Self::Operator(_) => Color::LightGreen,
 		};
-		Style::default()
-			.fg(color)
-			.add_modifier(ratatui::style::Modifier::REVERSED)
+		Style::default().fg(color).add_modifier(ratatui::style::Modifier::REVERSED)
 	}
 }
 
@@ -78,10 +76,7 @@ impl Vim {
 	}
 
 	pub const fn with_pending(self, pending: Input) -> Self {
-		Self {
-			mode: self.mode,
-			pending,
-		}
+		Self { mode: self.mode, pending }
 	}
 
 	#[allow(clippy::too_many_lines)]
@@ -93,21 +88,11 @@ impl Vim {
 		match self.mode {
 			Mode::Normal | Mode::Visual | Mode::Operator(_) => {
 				match input {
-					Input {
-						key: Key::Char('h'), ..
-					} => textarea.move_cursor(CursorMove::Back),
-					Input {
-						key: Key::Char('j'), ..
-					} => textarea.move_cursor(CursorMove::Down),
-					Input {
-						key: Key::Char('k'), ..
-					} => textarea.move_cursor(CursorMove::Up),
-					Input {
-						key: Key::Char('l'), ..
-					} => textarea.move_cursor(CursorMove::Forward),
-					Input {
-						key: Key::Char('w'), ..
-					} => textarea.move_cursor(CursorMove::WordForward),
+					Input { key: Key::Char('h'), .. } => textarea.move_cursor(CursorMove::Back),
+					Input { key: Key::Char('j'), .. } => textarea.move_cursor(CursorMove::Down),
+					Input { key: Key::Char('k'), .. } => textarea.move_cursor(CursorMove::Up),
+					Input { key: Key::Char('l'), .. } => textarea.move_cursor(CursorMove::Forward),
+					Input { key: Key::Char('w'), .. } => textarea.move_cursor(CursorMove::WordForward),
 					Input {
 						key: Key::Char('e'),
 						ctrl: false,
@@ -123,28 +108,18 @@ impl Vim {
 						ctrl: false,
 						..
 					} => textarea.move_cursor(CursorMove::WordBack),
-					Input {
-						key: Key::Char('^'), ..
-					} => textarea.move_cursor(CursorMove::Head),
-					Input {
-						key: Key::Char('$'), ..
-					} => textarea.move_cursor(CursorMove::End),
-					Input {
-						key: Key::Char('D'), ..
-					} => {
+					Input { key: Key::Char('^'), .. } => textarea.move_cursor(CursorMove::Head),
+					Input { key: Key::Char('$'), .. } => textarea.move_cursor(CursorMove::End),
+					Input { key: Key::Char('D'), .. } => {
 						textarea.delete_line_by_end();
 						return Transition::Mode(Mode::Normal);
 					}
-					Input {
-						key: Key::Char('C'), ..
-					} => {
+					Input { key: Key::Char('C'), .. } => {
 						textarea.delete_line_by_end();
 						textarea.cancel_selection();
 						return Transition::Mode(Mode::Insert);
 					}
-					Input {
-						key: Key::Char('p'), ..
-					} => {
+					Input { key: Key::Char('p'), .. } => {
 						textarea.paste();
 						return Transition::Mode(Mode::Normal);
 					}
@@ -164,50 +139,36 @@ impl Vim {
 						textarea.redo();
 						return Transition::Mode(Mode::Normal);
 					}
-					Input {
-						key: Key::Char('x'), ..
-					} => {
+					Input { key: Key::Char('x'), .. } => {
 						textarea.delete_next_char();
 						return Transition::Mode(Mode::Normal);
 					}
-					Input {
-						key: Key::Char('i'), ..
-					} => {
+					Input { key: Key::Char('i'), .. } => {
 						textarea.cancel_selection();
 						return Transition::Mode(Mode::Insert);
 					}
-					Input {
-						key: Key::Char('a'), ..
-					} => {
+					Input { key: Key::Char('a'), .. } => {
 						textarea.cancel_selection();
 						textarea.move_cursor(CursorMove::Forward);
 						return Transition::Mode(Mode::Insert);
 					}
-					Input {
-						key: Key::Char('A'), ..
-					} => {
+					Input { key: Key::Char('A'), .. } => {
 						textarea.cancel_selection();
 						textarea.move_cursor(CursorMove::End);
 						return Transition::Mode(Mode::Insert);
 					}
-					Input {
-						key: Key::Char('o'), ..
-					} => {
+					Input { key: Key::Char('o'), .. } => {
 						textarea.move_cursor(CursorMove::End);
 						textarea.insert_newline();
 						return Transition::Mode(Mode::Insert);
 					}
-					Input {
-						key: Key::Char('O'), ..
-					} => {
+					Input { key: Key::Char('O'), .. } => {
 						textarea.move_cursor(CursorMove::Head);
 						textarea.insert_newline();
 						textarea.move_cursor(CursorMove::Up);
 						return Transition::Mode(Mode::Insert);
 					}
-					Input {
-						key: Key::Char('I'), ..
-					} => {
+					Input { key: Key::Char('I'), .. } => {
 						textarea.cancel_selection();
 						textarea.move_cursor(CursorMove::Head);
 						return Transition::Mode(Mode::Insert);

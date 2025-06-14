@@ -51,9 +51,7 @@ impl HttpRequest {
 	}
 
 	pub fn content_type(&self) -> Option<&String> {
-		self.headers
-			.get("Content-Type")
-			.or_else(|| self.headers.get("content-type"))
+		self.headers.get("Content-Type").or_else(|| self.headers.get("content-type"))
 	}
 
 	pub const fn has_body(&self) -> bool {
