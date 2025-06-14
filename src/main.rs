@@ -1,4 +1,3 @@
-use anyhow::Result;
 use ratatui::{
 	Terminal,
 	backend::CrosstermBackend,
@@ -14,6 +13,7 @@ use std::time::Duration;
 mod app;
 mod curl;
 mod http_client;
+mod logger;
 mod request;
 mod response;
 mod ui;
@@ -22,7 +22,8 @@ mod vim;
 use app::App;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
+	logger::initialize_logging()?;
 	enable_raw_mode()?;
 	let mut stdout = io::stdout();
 	execute!(stdout, EnterAlternateScreen, EnableMouseCapture, EnableBracketedPaste)?;
