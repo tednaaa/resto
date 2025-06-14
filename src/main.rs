@@ -56,11 +56,11 @@ async fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app
 						if should_quit {
 							return Ok(());
 						}
-					}
+					},
 					Event::Paste(text) => {
 						app.handle_paste(text)?;
-					}
-					_ => {}
+					},
+					_ => {},
 				}
 			}
 		}

@@ -159,11 +159,7 @@ impl App {
 
 	fn previous_tab(&mut self) {
 		let current_index = self.active_tab.as_index();
-		let previous_index = if current_index == 0 {
-			MainContentTab::TABS.len() - 1
-		} else {
-			current_index - 1
-		};
+		let previous_index = if current_index == 0 { MainContentTab::TABS.len() - 1 } else { current_index - 1 };
 		self.active_tab = MainContentTab::from_index(previous_index).unwrap_or(MainContentTab::Request);
 	}
 
@@ -183,7 +179,8 @@ impl App {
 
 	fn response_section_next_tab(&mut self) {
 		let next_index = (self.response_section_active_tab.as_index() + 1) % ResponseSectionTab::TABS.len();
-		self.response_section_active_tab = ResponseSectionTab::from_index(next_index).unwrap_or(ResponseSectionTab::Headers);
+		self.response_section_active_tab =
+			ResponseSectionTab::from_index(next_index).unwrap_or(ResponseSectionTab::Headers);
 	}
 
 	fn response_section_previous_tab(&mut self) {
@@ -192,7 +189,8 @@ impl App {
 		} else {
 			self.response_section_active_tab.as_index() - 1
 		};
-		self.response_section_active_tab = ResponseSectionTab::from_index(previous_index).unwrap_or(ResponseSectionTab::Headers);
+		self.response_section_active_tab =
+			ResponseSectionTab::from_index(previous_index).unwrap_or(ResponseSectionTab::Headers);
 	}
 
 	pub async fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
@@ -218,7 +216,7 @@ impl App {
 		match key.code {
 			KeyCode::Char('q') => {
 				return Ok(true); // Signal quit
-			}
+			},
 			KeyCode::Tab => self.next_tab(),
 			KeyCode::BackTab => self.previous_tab(),
 			KeyCode::Char(']') => self.request_section_next_tab(),
@@ -237,7 +235,7 @@ impl App {
 				}
 
 				self.setup_textarea_for_vim();
-			}
+			},
 			KeyCode::Char('h') => {
 				self.state = AppState::EditingHeaders;
 				self.input_mode = InputMode::Editing;
@@ -253,7 +251,7 @@ impl App {
 				};
 
 				self.setup_textarea_for_vim();
-			}
+			},
 			KeyCode::Char('b') => {
 				self.state = AppState::EditingBody;
 				self.input_mode = InputMode::Editing;
@@ -267,29 +265,29 @@ impl App {
 				};
 
 				self.setup_textarea_for_vim();
-			}
+			},
 			KeyCode::Char('m') => {
 				self.current_request.method = self.current_request.method.next();
-			}
+			},
 			KeyCode::Char('M') => {
 				self.current_request.method = self.current_request.method.previous();
-			}
+			},
 			KeyCode::Enter => {
 				if !self.loading {
 					self.send_request().await?;
 				}
-			}
+			},
 			KeyCode::Char('r') => {
 				self.state = AppState::ViewingResponse;
-			}
+			},
 			KeyCode::Char('?') => {
 				self.state = AppState::Help;
-			}
+			},
 			KeyCode::Char('c') => {
 				if key.modifiers.contains(KeyModifiers::CONTROL) {
 					self.clear_response();
 				}
-			}
+			},
 			KeyCode::Up => {
 				if self.active_tab == MainContentTab::History && !self.responses.is_empty() {
 					if let Some(selected) = self.selected_response {
@@ -300,7 +298,7 @@ impl App {
 						self.selected_response = Some(self.responses.len() - 1);
 					}
 				}
-			}
+			},
 			KeyCode::Down => {
 				if self.active_tab == MainContentTab::History && !self.responses.is_empty() {
 					if let Some(selected) = self.selected_response {
@@ -311,13 +309,13 @@ impl App {
 						self.selected_response = Some(0);
 					}
 				}
-			}
+			},
 			KeyCode::Esc => {
 				if matches!(self.state, AppState::Help | AppState::ViewingResponse) {
 					self.state = AppState::Normal;
 				}
-			}
-			_ => {}
+			},
+			_ => {},
 		}
 		Ok(false)
 	}
@@ -330,13 +328,13 @@ impl App {
 					self.state = AppState::Normal;
 					self.input_mode = InputMode::Normal;
 					return Ok(false);
-				}
+				},
 				KeyCode::Esc => {
 					self.state = AppState::Normal;
 					self.input_mode = InputMode::Normal;
 					return Ok(false);
-				}
-				_ => {}
+				},
+				_ => {},
 			}
 		}
 
@@ -361,16 +359,16 @@ impl App {
 				textarea.set_block(mode.block(title));
 				textarea.set_cursor_style(mode.cursor_style());
 				self.vim = Vim::new(mode);
-			}
-			Transition::Nop | Transition::Mode(_) => {}
+			},
+			Transition::Nop | Transition::Mode(_) => {},
 			Transition::Pending(pending_input) => {
 				self.vim = self.vim.clone().with_pending(pending_input);
-			}
+			},
 			Transition::Quit => {
 				self.state = AppState::Normal;
 				self.input_mode = InputMode::Normal;
 				self.vim = Vim::new(Mode::Normal);
-			}
+			},
 		}
 
 		Ok(false)
@@ -386,7 +384,7 @@ impl App {
 				} else {
 					self.current_request.url = url_text;
 				}
-			}
+			},
 			AppState::EditingHeaders => {
 				self.current_request.headers.clear();
 				for line in self.headers_textarea.lines() {
@@ -398,11 +396,11 @@ impl App {
 						}
 					}
 				}
-			}
+			},
 			AppState::EditingBody => {
 				self.current_request.body = self.body_textarea.lines().join("\n");
-			}
-			_ => {}
+			},
+			_ => {},
 		}
 
 		Ok(())
@@ -426,16 +424,16 @@ impl App {
 		match self.state {
 			AppState::EditingUrl => {
 				textarea.set_placeholder_text("Enter URL... or paste curl");
-			}
+			},
 			AppState::EditingHeaders => {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
 				textarea.set_placeholder_text("key: value\n\nkey2: value2");
-			}
+			},
 			AppState::EditingBody => {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
 				textarea.set_placeholder_text("Request body (JSON, text, etc.)");
-			}
-			_ => {}
+			},
+			_ => {},
 		}
 
 		textarea.set_tab_length(2);
@@ -456,10 +454,10 @@ impl App {
 			Ok(response) => {
 				self.responses.push(response);
 				self.selected_response = Some(self.responses.len() - 1);
-			}
+			},
 			Err(error) => {
 				self.error_message = Some(format!("Request failed: {error}"));
-			}
+			},
 		}
 
 		self.loading = false;
@@ -478,8 +476,7 @@ impl App {
 	}
 
 	pub fn get_current_response(&self) -> Option<&HttpResponse> {
-		self.selected_response
-			.map_or_else(|| self.responses.last(), |index| self.responses.get(index))
+		self.selected_response.map_or_else(|| self.responses.last(), |index| self.responses.get(index))
 	}
 
 	pub const fn get_url_textarea(&self) -> &TextArea<'static> {

@@ -50,14 +50,7 @@ impl HttpClient {
 
 		let body = response.text().await?;
 
-		Ok(HttpResponse::new(
-			request.id.clone(),
-			status_code,
-			status_text,
-			headers,
-			body,
-			response_time,
-		))
+		Ok(HttpResponse::new(request.id.clone(), status_code, status_text, headers, body, response_time))
 	}
 
 	const fn convert_method(&self, method: &HttpMethod) -> Method {

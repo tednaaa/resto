@@ -62,8 +62,7 @@ impl HttpResponse {
 	}
 
 	pub fn is_xml(&self) -> bool {
-		self.content_type()
-			.is_some_and(|ct| ct.contains("application/xml") || ct.contains("text/xml"))
+		self.content_type().is_some_and(|ct| ct.contains("application/xml") || ct.contains("text/xml"))
 	}
 
 	pub fn is_html(&self) -> bool {
@@ -71,11 +70,7 @@ impl HttpResponse {
 	}
 
 	pub fn formatted_headers(&self) -> String {
-		self.headers
-			.iter()
-			.map(|(key, value)| format!("{key}: {value}"))
-			.collect::<Vec<_>>()
-			.join("\n")
+		self.headers.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
 	}
 
 	pub fn pretty_json(&self) -> anyhow::Result<String, serde_json::Error> {

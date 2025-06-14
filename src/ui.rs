@@ -222,14 +222,14 @@ fn draw_request_tab(frame: &mut Frame, area: Rect, app: &App) {
 	match app.request_section_active_tab {
 		RequestSectionTab::Headers => draw_request_headers_tab(frame, request_section_chunks[1], app),
 		RequestSectionTab::Body => draw_request_body_tab(frame, request_section_chunks[1], app),
-		RequestSectionTab::Query => {}
+		RequestSectionTab::Query => {},
 	}
 
 	frame.render_widget(response_section_tabs_widget, response_section_chunks[0]);
 	match app.response_section_active_tab {
 		ResponseSectionTab::Body => draw_response_body_tab(frame, response_section_chunks[1], app),
 		ResponseSectionTab::Headers => draw_response_headers_tab(frame, response_section_chunks[1], app),
-		ResponseSectionTab::Cookies => {}
+		ResponseSectionTab::Cookies => {},
 	}
 }
 
@@ -247,23 +247,14 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 	let method_widget = Paragraph::new(app.current_request.method.as_str())
 		.style(Style::default().fg(app.current_request.method.color()).add_modifier(Modifier::BOLD))
 		.alignment(Alignment::Center)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title("Method")
-				.border_style(Style::default().fg(Color::White)),
-		);
+		.block(Block::default().borders(Borders::ALL).title("Method").border_style(Style::default().fg(Color::White)));
 	frame.render_widget(method_widget, chunks[0]);
 
 	if matches!(app.state, AppState::EditingUrl) {
 		frame.render_widget(app.get_url_textarea(), chunks[1]);
 	} else {
 		let url_style = Style::default().fg(Color::White);
-		let url_text = if app.current_request.url.is_empty() {
-			""
-		} else {
-			&app.current_request.url
-		};
+		let url_text = if app.current_request.url.is_empty() { "" } else { &app.current_request.url };
 
 		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
@@ -279,11 +270,8 @@ fn draw_request_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
 	if matches!(app.state, AppState::EditingHeaders) {
 		frame.render_widget(app.get_headers_textarea(), area);
 	} else {
-		let headers_text = if app.current_request.headers.is_empty() {
-			""
-		} else {
-			&app.current_request.formatted_headers()
-		};
+		let headers_text =
+			if app.current_request.headers.is_empty() { "" } else { &app.current_request.formatted_headers() };
 
 		let headers_style = Style::default().fg(Color::White);
 
@@ -301,17 +289,10 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 	if matches!(app.state, AppState::EditingBody) {
 		frame.render_widget(app.get_body_textarea(), area);
 	} else {
-		let body_text = if app.current_request.body.is_empty() {
-			""
-		} else {
-			&app.current_request.body
-		};
+		let body_text = if app.current_request.body.is_empty() { "" } else { &app.current_request.body };
 
-		let body_style = if app.current_request.has_body() {
-			Style::default().fg(Color::White)
-		} else {
-			Style::default().fg(Color::Gray)
-		};
+		let body_style =
+			if app.current_request.has_body() { Style::default().fg(Color::White) } else { Style::default().fg(Color::Gray) };
 
 		let body_widget = Paragraph::new(body_text).style(body_style).wrap(Wrap { trim: true }).block(
 			Block::default()
@@ -385,12 +366,7 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let no_history = Paragraph::new("No request history\nSend some requests to see them here")
 			.style(Style::default().fg(Color::Gray))
 			.alignment(Alignment::Center)
-			.block(
-				Block::default()
-					.borders(Borders::ALL)
-					.title("History")
-					.border_style(Style::default().fg(Color::White)),
-			);
+			.block(Block::default().borders(Borders::ALL).title("History").border_style(Style::default().fg(Color::White)));
 		frame.render_widget(no_history, area);
 	} else {
 		let items: Vec<ListItem> = app
@@ -402,7 +378,7 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 					"{} {} - {}ms",
 					response.status_code,
 					response.created_at.format("%H:%M:%S"),
-					response.response_time
+					response.response_time,
 				);
 
 				let style = if Some(i) == app.selected_response {
@@ -416,12 +392,7 @@ fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
 			.collect();
 
 		let history_list = List::new(items)
-			.block(
-				Block::default()
-					.borders(Borders::ALL)
-					.title("History")
-					.border_style(Style::default().fg(Color::White)),
-			)
+			.block(Block::default().borders(Borders::ALL).title("History").border_style(Style::default().fg(Color::White)))
 			.highlight_style(Style::default().add_modifier(Modifier::REVERSED));
 
 		frame.render_stateful_widget(history_list, area, &mut ratatui::widgets::ListState::default());
@@ -432,16 +403,13 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 	let should_hide_vim_mode = matches!(app.state, AppState::Normal | AppState::Help);
 
 	let vim_mode_text = format!("-- {} --", app.vim.mode);
-	let vim_mode_width = if should_hide_vim_mode {
-		0
-	} else {
-		vim_mode_text.chars().count() as u16 + 2
-	};
+	let vim_mode_width = if should_hide_vim_mode { 0 } else { vim_mode_text.chars().count() as u16 + 2 };
 
 	let info_text = format!("{} v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 	let info_text_width = info_text.chars().count() as u16;
 
-	let vim_mode_widget = Paragraph::new(vim_mode_text).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+	let vim_mode_widget =
+		Paragraph::new(vim_mode_text).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
 
 	let mut keybindings_widget = if matches!(app.input_mode, InputMode::Editing) {
 		Paragraph::new("Save: Enter | Cancel: Escape")
@@ -458,11 +426,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 
 	let layout = Layout::default()
 		.direction(Direction::Horizontal)
-		.constraints([
-			Constraint::Length(vim_mode_width),
-			Constraint::Min(0),
-			Constraint::Length(info_text_width),
-		])
+		.constraints([Constraint::Length(vim_mode_width), Constraint::Min(0), Constraint::Length(info_text_width)])
 		.split(area);
 
 	frame.render_widget(vim_mode_widget, layout[0]);
@@ -493,12 +457,7 @@ fn draw_help(frame: &mut Frame, area: Rect) {
 	let help_paragraph = Paragraph::new(help_text.join("\n"))
 		.style(Style::default().fg(Color::White))
 		.wrap(Wrap { trim: true })
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title("Help")
-				.border_style(Style::default().fg(Color::Yellow)),
-		);
+		.block(Block::default().borders(Borders::ALL).title("Help").border_style(Style::default().fg(Color::Yellow)));
 	frame.render_widget(help_paragraph, area);
 }
 
@@ -510,12 +469,7 @@ fn draw_loading_popup(frame: &mut Frame) {
 	let loading = Paragraph::new("Sending request...")
 		.style(Style::default().fg(Color::Yellow))
 		.alignment(Alignment::Center)
-		.block(
-			Block::default()
-				.borders(Borders::ALL)
-				.title("Loading")
-				.border_style(Style::default().fg(Color::Yellow)),
-		);
+		.block(Block::default().borders(Borders::ALL).title("Loading").border_style(Style::default().fg(Color::Yellow)));
 	frame.render_widget(loading, popup_area);
 }
 

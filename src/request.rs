@@ -59,11 +59,7 @@ impl HttpRequest {
 	}
 
 	pub fn formatted_headers(&self) -> String {
-		self.headers
-			.iter()
-			.map(|(key, value)| format!("{key}: {value}"))
-			.collect::<Vec<_>>()
-			.join("\n")
+		self.headers.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
 	}
 }
 

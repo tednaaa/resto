@@ -41,11 +41,9 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				if i >= tokens.len() {
 					return Err(CurlParseError::InvalidFormat("Missing method after -X".to_string()).into());
 				}
-				let method = tokens[i]
-					.parse::<HttpMethod>()
-					.map_err(|_| CurlParseError::InvalidMethod(tokens[i].clone()))?;
+				let method = tokens[i].parse::<HttpMethod>().map_err(|_| CurlParseError::InvalidMethod(tokens[i].clone()))?;
 				request = request.with_method(method);
-			}
+			},
 			"-H" | "--header" => {
 				i += 1;
 				if i >= tokens.len() {
@@ -59,7 +57,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				} else {
 					return Err(CurlParseError::InvalidHeader(header_str.clone()).into());
 				}
-			}
+			},
 			"-d" | "--data" | "--data-raw" => {
 				i += 1;
 				if i >= tokens.len() {
@@ -69,7 +67,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				if matches!(request.method, HttpMethod::Get) {
 					request = request.with_method(HttpMethod::Post);
 				}
-			}
+			},
 			"--data-binary" => {
 				i += 1;
 				if i >= tokens.len() {
@@ -79,17 +77,17 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				if matches!(request.method, HttpMethod::Get) {
 					request = request.with_method(HttpMethod::Post);
 				}
-			}
+			},
 			"--compressed" | "-L" | "--location" | "-k" | "--insecure" | "-s" | "--silent" | "-v" | "--verbose" => {
 				// Skip common curl flags that don't affect the HTTP request structure
-			}
+			},
 			_ => {
 				// Assume it's a URL if it starts with http
 				if token.starts_with("http") {
 					request = request.with_url(token.clone());
 				}
 				// Skip other unrecognized tokens
-			}
+			},
 		}
 		i += 1;
 	}
@@ -118,7 +116,7 @@ fn tokenize_curl_command(input: &str) -> anyhow::Result<Vec<String>> {
 		match ch {
 			'\\' => {
 				escape_next = true;
-			}
+			},
 			'"' | '\'' => {
 				if !in_quotes {
 					in_quotes = true;
@@ -128,7 +126,7 @@ fn tokenize_curl_command(input: &str) -> anyhow::Result<Vec<String>> {
 				} else {
 					current_token.push(ch);
 				}
-			}
+			},
 			' ' | '\t' | '\n' | '\r' => {
 				if in_quotes {
 					current_token.push(ch);
@@ -136,10 +134,10 @@ fn tokenize_curl_command(input: &str) -> anyhow::Result<Vec<String>> {
 					tokens.push(current_token.clone());
 					current_token.clear();
 				}
-			}
+			},
 			_ => {
 				current_token.push(ch);
-			}
+			},
 		}
 	}
 
