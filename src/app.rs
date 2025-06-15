@@ -349,14 +349,6 @@ impl App {
 
 		match self.vim.transition(input, textarea) {
 			Transition::Mode(mode) if self.vim.mode != mode => {
-				let title = match self.state {
-					AppState::EditingUrl => "URL",
-					AppState::EditingHeaders => "Headers",
-					AppState::EditingBody => "Body",
-					_ => return Ok(false),
-				};
-
-				textarea.set_block(mode.block(title));
 				textarea.set_cursor_style(mode.cursor_style());
 				self.vim = Vim::new(mode);
 			},
@@ -414,20 +406,13 @@ impl App {
 			_ => return,
 		};
 
-		let title = match self.state {
-			AppState::EditingUrl => "URL",
-			AppState::EditingHeaders => "Headers",
-			AppState::EditingBody => "Body",
-			_ => return,
-		};
-
 		match self.state {
 			AppState::EditingUrl => {
 				textarea.set_placeholder_text("Enter URL... or paste curl");
 			},
 			AppState::EditingHeaders => {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
-				textarea.set_placeholder_text("key: value\n\nkey2: value2");
+				textarea.set_placeholder_text("Authorization: Bearer ....");
 			},
 			AppState::EditingBody => {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
@@ -437,7 +422,7 @@ impl App {
 		}
 
 		textarea.set_tab_length(2);
-		textarea.set_block(self.vim.mode.block(title));
+		textarea.set_block(self.vim.mode.block());
 		textarea.set_cursor_style(self.vim.mode.cursor_style());
 	}
 

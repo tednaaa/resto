@@ -2,11 +2,15 @@ use ratatui::{
 	Frame,
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
 	style::{Color, Modifier, Style},
-	text::{Line, Span},
-	widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Tabs, Wrap},
+	symbols,
+	text::{Line, Span, ToSpan},
+	widgets::{Block, Borders, Clear, List, ListItem, Padding, Paragraph, Tabs, Wrap},
 };
 
-use crate::app::{App, AppState, InputMode};
+use crate::{
+	app::{App, AppState, InputMode},
+	response::HttpResponse,
+};
 
 pub fn draw(frame: &mut Frame, app: &App) {
 	let chunks = Layout::default()
@@ -74,7 +78,8 @@ fn draw_main_content(frame: &mut Frame, area: Rect, app: &App) {
 		.collect();
 
 	let tabs_widget = Tabs::new(tab_titles)
-		.block(Block::default().borders(Borders::ALL).title("Tabs"))
+		.block(Block::default().padding(Padding::top(1)))
+		.divider(symbols::DOT)
 		.highlight_style(Style::default().fg(Color::Yellow))
 		.select(app.active_tab.as_index());
 
@@ -247,7 +252,9 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 	let method_widget = Paragraph::new(app.current_request.method.as_str())
 		.style(Style::default().fg(app.current_request.method.color()).add_modifier(Modifier::BOLD))
 		.alignment(Alignment::Center)
-		.block(Block::default().borders(Borders::ALL).title("Method").border_style(Style::default().fg(Color::White)));
+		.block(
+			Block::default().borders(Borders::ALL).border_style(Style::default().fg(app.current_request.method.color())),
+		);
 	frame.render_widget(method_widget, chunks[0]);
 
 	if matches!(app.state, AppState::EditingUrl) {
@@ -259,7 +266,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("URL (press 'u' to edit) ")
+				.title("URL ( press 'u' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(url_widget, chunks[1]);
@@ -278,7 +285,7 @@ fn draw_request_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let headers_widget = Paragraph::new(headers_text).style(headers_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("Headers (press 'h' to edit) ")
+				.title("( press 'h' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(headers_widget, area);
@@ -297,68 +304,65 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let body_widget = Paragraph::new(body_text).style(body_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("Body (press 'b' to edit) ")
+				.title("( press 'b' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(body_widget, area);
 	}
 }
 
-fn draw_response_body_tab(frame: &mut Frame, area: Rect, app: &App) {
+fn create_response_block() -> Block<'static> {
+	Block::default()
+		.padding(Padding::symmetric(2, 1))
+		.borders(Borders::ALL)
+		.border_style(Style::default().fg(Color::White))
+}
+
+fn create_no_response_widget() -> Paragraph<'static> {
+	Paragraph::new("No response yet\nSend a request to see the response here")
+		.style(Style::default().fg(Color::Gray))
+		.alignment(Alignment::Center)
+		.block(create_response_block())
+}
+
+fn render_response_content<F>(frame: &mut Frame, area: Rect, app: &App, content_fn: F)
+where
+	F: FnOnce(&HttpResponse) -> String,
+{
 	if let Some(response) = app.get_current_response() {
-		// let status_text = format!(
-		// 	"{} {} | {} | {}ms",
-		// 	response.status_code,
-		// 	response.status_text,
-		// 	response.formatted_size(),
-		// 	response.response_time
-		// );
+		let content = content_fn(response);
+		let status_text = app.get_current_response().map_or(String::new(), |response| {
+			format!(
+				"( {} {} | {} | {}ms )",
+				response.status_code,
+				response.status_text,
+				response.formatted_size(),
+				response.response_time
+			)
+		});
 
-		// let status_widget = Paragraph::new(status_text)
-		// 	.style(Style::default().fg(response.status_color()).add_modifier(Modifier::BOLD))
-		// 	.alignment(Alignment::Left)
-		// 	.block(
-		// 		Block::default()
-		// 			.borders(Borders::ALL)
-		// 			.title("Status")
-		// 			.border_style(Style::default().fg(Color::White)),
-		// 	);
-		// frame.render_widget(status_widget, area);
-
-		let body_text = if response.is_json() {
-			response.pretty_json().unwrap_or_else(|_| response.body.clone())
-		} else {
-			response.body.clone()
-		};
-
-		let body_widget = Paragraph::new(body_text)
+		let widget = Paragraph::new(content)
 			.style(Style::default().fg(Color::White))
 			.wrap(Wrap { trim: true })
-			.block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::White)));
-		frame.render_widget(body_widget, area);
+			.block(create_response_block().title(status_text));
+		frame.render_widget(widget, area);
 	} else {
-		let no_response = Paragraph::new("No response yet\nSend a request to see the response here")
-			.style(Style::default().fg(Color::Gray))
-			.alignment(Alignment::Center)
-			.block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::White)));
-		frame.render_widget(no_response, area);
+		frame.render_widget(create_no_response_widget(), area);
 	}
 }
 
+fn draw_response_body_tab(frame: &mut Frame, area: Rect, app: &App) {
+	render_response_content(frame, area, app, |response| {
+		if response.is_json() {
+			response.pretty_json().unwrap_or_else(|_| response.body.clone())
+		} else {
+			response.body.clone()
+		}
+	});
+}
+
 fn draw_response_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
-	if let Some(response) = app.get_current_response() {
-		let headers_widget = Paragraph::new(response.formatted_headers())
-			.style(Style::default().fg(Color::White))
-			.wrap(Wrap { trim: true })
-			.block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::White)));
-		frame.render_widget(headers_widget, area);
-	} else {
-		let no_response = Paragraph::new("No response yet\nSend a request to see the response here")
-			.style(Style::default().fg(Color::Gray))
-			.alignment(Alignment::Center)
-			.block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::White)));
-		frame.render_widget(no_response, area);
-	}
+	render_response_content(frame, area, app, HttpResponse::formatted_headers);
 }
 
 fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
