@@ -94,7 +94,7 @@ impl Vim {
 						}
 					},
 					Input { key: Key::Char('b'), ctrl: false, .. } => textarea.move_cursor(CursorMove::WordBack),
-					Input { key: Key::Char('^'), .. } => textarea.move_cursor(CursorMove::Head),
+					Input { key: Key::Char('0'), .. } => textarea.move_cursor(CursorMove::Head),
 					Input { key: Key::Char('$'), .. } => textarea.move_cursor(CursorMove::End),
 					Input { key: Key::Char('D'), .. } => {
 						textarea.delete_line_by_end();
