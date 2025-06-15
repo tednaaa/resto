@@ -1,6 +1,6 @@
 // see https://github.com/rhysd/tui-textarea/blob/main/examples/vim.rs
 
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders};
 use std::fmt;
 use tui_textarea::{CursorMove, Input, Key, Scrolling, TextArea};
@@ -14,11 +14,8 @@ pub enum Mode {
 }
 
 impl Mode {
-	pub fn block(self, title: &str) -> Block<'_> {
-		Block::default()
-			.borders(Borders::ALL)
-			.title(title)
-			.border_style(ratatui::style::Style::default().fg(self.border_color()))
+	pub fn block(self) -> Block<'static> {
+		Block::default().borders(Borders::ALL).border_style(Style::default().fg(self.border_color()))
 	}
 
 	pub const fn border_color(self) -> Color {
@@ -37,7 +34,7 @@ impl Mode {
 			Self::Visual => Color::LightYellow,
 			Self::Operator(_) => Color::LightGreen,
 		};
-		Style::default().fg(color).add_modifier(ratatui::style::Modifier::REVERSED)
+		Style::default().fg(color).add_modifier(Modifier::REVERSED)
 	}
 }
 
