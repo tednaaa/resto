@@ -73,7 +73,6 @@ impl Vim {
 		Self { mode: self.mode, pending }
 	}
 
-	#[allow(clippy::too_many_lines)]
 	pub fn transition(&self, input: Input, textarea: &mut TextArea<'_>) -> Transition {
 		if input.key == Key::Null {
 			return Transition::Nop;

@@ -31,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
 	let mut terminal = Terminal::new(backend)?;
 
 	let mut app = App::new();
-	let res = run_app(&mut terminal, &mut app).await;
+	let res = run_app(&mut terminal, &mut app);
 
 	disable_raw_mode()?;
 	execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
@@ -44,15 +44,15 @@ async fn main() -> anyhow::Result<()> {
 	Ok(())
 }
 
-async fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App) -> anyhow::Result<()> {
+fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App) -> anyhow::Result<()> {
 	loop {
 		terminal.draw(|frame| ui::draw(frame, app))?;
 
-		if poll(Duration::from_millis(100))? {
+		if poll(Duration::from_millis(50))? {
 			if let Ok(event) = read() {
 				match event {
 					Event::Key(key) => {
-						let should_quit = app.handle_key_event(key).await?;
+						let should_quit = app.handle_key_event(key)?;
 						if should_quit {
 							return Ok(());
 						}
@@ -65,6 +65,6 @@ async fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app
 			}
 		}
 
-		app.update().await?;
+		app.update();
 	}
 }

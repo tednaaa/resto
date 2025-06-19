@@ -1,5 +1,6 @@
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
+use tokio::sync::mpsc;
 use tui_textarea::{Input, TextArea};
 
 use crate::curl::parse_curl;
@@ -8,6 +9,8 @@ use crate::request::HttpRequest;
 use crate::response::HttpResponse;
 use crate::ui::{MainContentTab, RequestSectionTab, ResponseSectionTab};
 use crate::vim::{Mode, Transition, Vim};
+
+pub type RequestResult = anyhow::Result<HttpResponse, String>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppState {
@@ -123,6 +126,9 @@ pub struct App {
 	pub response_section_active_tab: ResponseSectionTab,
 
 	pub vim: Vim,
+
+	response_rx: mpsc::UnboundedReceiver<RequestResult>,
+	response_tx: mpsc::UnboundedSender<RequestResult>,
 }
 
 impl App {
@@ -132,6 +138,8 @@ impl App {
 		let body_textarea = TextArea::default();
 
 		let vim = Vim::new(Mode::Normal);
+
+		let (response_tx, response_rx) = mpsc::unbounded_channel();
 
 		Self {
 			state: AppState::Normal,
@@ -149,6 +157,8 @@ impl App {
 			request_section_active_tab: RequestSectionTab::Headers,
 			response_section_active_tab: ResponseSectionTab::Body,
 			vim,
+			response_rx,
+			response_tx,
 		}
 	}
 
@@ -193,9 +203,9 @@ impl App {
 			ResponseSectionTab::from_index(previous_index).unwrap_or(ResponseSectionTab::Headers);
 	}
 
-	pub async fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
+	pub fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		match self.input_mode {
-			InputMode::Normal => self.handle_normal_mode_key(key).await,
+			InputMode::Normal => self.handle_normal_mode_key(key),
 			InputMode::Editing => self.handle_editing_mode_key(key),
 		}
 	}
@@ -212,7 +222,8 @@ impl App {
 		Ok(())
 	}
 
-	async fn handle_normal_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
+	#[allow(clippy::unnecessary_wraps)]
+	fn handle_normal_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		match key.code {
 			KeyCode::Char('q') => {
 				return Ok(true); // Signal quit
@@ -274,7 +285,7 @@ impl App {
 			},
 			KeyCode::Enter => {
 				if !self.loading {
-					self.send_request().await?;
+					self.send_request();
 				}
 			},
 			KeyCode::Char('r') => {
@@ -427,33 +438,44 @@ impl App {
 		textarea.set_cursor_style(self.vim.mode.cursor_style());
 	}
 
-	async fn send_request(&mut self) -> anyhow::Result<()> {
+	fn send_request(&mut self) {
 		if self.current_request.url.is_empty() {
 			self.error_message = Some("URL cannot be empty".to_string());
-			return Ok(());
+			return;
 		}
 
 		self.loading = true;
 		self.error_message = None;
 
-		match self.http_client.send_request(&self.current_request).await {
-			Ok(response) => {
-				self.responses.push(response);
-				self.selected_response = Some(self.responses.len() - 1);
-			},
-			Err(error) => {
-				self.error_message = Some(format!("Request failed: {error}"));
-			},
-		}
+		let request = self.current_request.clone();
+		let http_client = self.http_client.clone();
+		let tx = self.response_tx.clone();
 
-		self.loading = false;
-		Ok(())
+		tokio::spawn(async move {
+			let result = match http_client.send_request(&request).await {
+				Ok(response) => Ok(response),
+				Err(error) => Err(format!("Request failed: {error}")),
+			};
+
+			let _ = tx.send(result);
+		});
 	}
 
-	// TODO: Handle any background updates here
-	#[allow(clippy::unused_async, clippy::needless_pass_by_ref_mut)]
-	pub async fn update(&mut self) -> anyhow::Result<()> {
-		Ok(())
+	pub fn update(&mut self) {
+		while let Ok(result) = self.response_rx.try_recv() {
+			self.loading = false;
+
+			match result {
+				Ok(response) => {
+					self.responses.push(response);
+					self.selected_response = Some(self.responses.len() - 1);
+					self.error_message = None;
+				},
+				Err(error) => {
+					self.error_message = Some(error);
+				},
+			}
+		}
 	}
 
 	fn clear_response(&mut self) {
