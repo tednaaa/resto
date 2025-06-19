@@ -4,7 +4,7 @@ use ratatui::{
 	style::{Color, Modifier, Style},
 	symbols,
 	text::{Line, Span},
-	widgets::{Block, Borders, Clear, List, ListItem, Padding, Paragraph, Tabs, Wrap},
+	widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Tabs, Wrap},
 };
 
 use crate::{
@@ -27,10 +27,6 @@ pub fn draw(frame: &mut Frame, app: &App) {
 	}
 
 	draw_footer(frame, chunks[1], app);
-
-	if app.loading {
-		draw_loading_popup(frame);
-	}
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -92,7 +88,6 @@ fn draw_main_content(frame: &mut Frame, area: Rect, app: &App) {
 
 	match app.active_tab {
 		MainContentTab::Request => draw_request_tab(frame, chunks[1], app),
-		// MainContentTab::Response => draw_response_tab(frame, chunks[1], app),
 		MainContentTab::History => draw_history_tab(frame, chunks[1], app),
 	}
 }
@@ -465,18 +460,7 @@ fn draw_help(frame: &mut Frame, area: Rect) {
 	frame.render_widget(help_paragraph, area);
 }
 
-fn draw_loading_popup(frame: &mut Frame) {
-	let popup_area = centered_rect(30, 10, frame.area());
-
-	frame.render_widget(Clear, popup_area);
-
-	let loading = Paragraph::new("Sending request...")
-		.style(Style::default().fg(Color::Yellow))
-		.alignment(Alignment::Center)
-		.block(Block::default().borders(Borders::ALL).title("Loading").border_style(Style::default().fg(Color::Yellow)));
-	frame.render_widget(loading, popup_area);
-}
-
+#[allow(dead_code)]
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 	let popup_layout = Layout::default()
 		.direction(Direction::Vertical)
