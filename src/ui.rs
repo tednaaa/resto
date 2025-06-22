@@ -222,7 +222,7 @@ fn draw_request_tab(frame: &mut Frame, area: Rect, app: &App) {
 	match app.request_section_active_tab {
 		RequestSectionTab::Headers => draw_request_headers_tab(frame, request_section_chunks[1], app),
 		RequestSectionTab::Body => draw_request_body_tab(frame, request_section_chunks[1], app),
-		RequestSectionTab::Query => {},
+		RequestSectionTab::Query => draw_request_queries_tab(frame, request_section_chunks[1], app),
 	}
 
 	frame.render_widget(response_section_tabs_widget, response_section_chunks[0]);
@@ -261,7 +261,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("URL ( press 'u' to edit )")
+				.title("URL ( press 'U' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(url_widget, chunks[1]);
@@ -280,7 +280,7 @@ fn draw_request_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let headers_widget = Paragraph::new(headers_text).style(headers_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'h' to edit )")
+				.title("( press 'H' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(headers_widget, area);
@@ -299,10 +299,29 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let body_widget = Paragraph::new(body_text).style(body_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'b' to edit )")
+				.title("( press 'B' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(body_widget, area);
+	}
+}
+
+fn draw_request_queries_tab(frame: &mut Frame, area: Rect, app: &App) {
+	if matches!(app.state, AppState::EditingQueries) {
+		frame.render_widget(app.get_queries_textarea(), area);
+	} else {
+		let queries_text =
+			if app.current_request.queries.is_empty() { "" } else { &app.current_request.formatted_queries() };
+
+		let queries_style = Style::default().fg(Color::White);
+
+		let queries_widget = Paragraph::new(queries_text).style(queries_style).wrap(Wrap { trim: true }).block(
+			Block::default()
+				.borders(Borders::ALL)
+				.title("( press 'Q' to edit )")
+				.border_style(Style::default().fg(Color::White)),
+		);
+		frame.render_widget(queries_widget, area);
 	}
 }
 

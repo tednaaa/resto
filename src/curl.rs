@@ -82,11 +82,28 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				// Skip common curl flags that don't affect the HTTP request structure
 			},
 			_ => {
-				// Assume it's a URL if it starts with http
 				if token.starts_with("http") {
-					request = request.with_url(token.clone());
+					let url = token.clone();
+
+					if let Some(query_start) = url.find('?') {
+						let base_url = url[..query_start].to_string();
+						let query_str = &url[query_start + 1..];
+
+						for query_pair in query_str.split('&') {
+							if let Some(eq_pos) = query_pair.find('=') {
+								let key = query_pair[..eq_pos].to_string();
+								let value = query_pair[eq_pos + 1..].to_string();
+								request = request.with_query(key, value);
+							} else if !query_pair.is_empty() {
+								request = request.with_query(query_pair.to_string(), String::new());
+							}
+						}
+
+						request = request.with_url(base_url);
+					} else {
+						request = request.with_url(url);
+					}
 				}
-				// Skip other unrecognized tokens
 			},
 		}
 		i += 1;
@@ -185,7 +202,6 @@ mod tests {
 		assert_eq!(result.url, "https://api.example.com/users/me/");
 		assert_eq!(result.method, HttpMethod::Get);
 
-		#[rustfmt::skip]
 		assert_eq!(
 			result.headers,
 			HashMap::from([
@@ -213,7 +229,6 @@ mod tests {
 		assert_eq!(result.url, "https://api.example.ru/api/projects/");
 		assert_eq!(result.method, HttpMethod::Post);
 
-		#[rustfmt::skip]
 		assert_eq!(
 			result.headers,
 			HashMap::from([
@@ -223,6 +238,41 @@ mod tests {
 		);
 
 		assert_eq!(result.body, r#"{"name":"test","projectType":"DAILY","isActive":false}"#);
+	}
+
+	#[test]
+	fn test_when_queries_passed() {
+		let curl = r"
+			curl 'https://api.example.ru/api/projects/?name=&ordering=-index&limit=50&offset=0&is_hidden=false' \
+			  -H 'Accept: application/json, text/plain, */*' \
+			  -H 'Connection: keep-alive' \
+			  -H 'x-use-camel-case: true'
+		";
+
+		let result = parse_curl(curl).unwrap();
+
+		assert_eq!(result.url, "https://api.example.ru/api/projects/");
+		assert_eq!(result.method, HttpMethod::Get);
+
+		assert_eq!(
+			result.headers,
+			HashMap::from([
+				(String::from("Accept"), String::from("application/json, text/plain, */*")),
+				(String::from("Connection"), String::from("keep-alive")),
+				(String::from("x-use-camel-case"), String::from("true")),
+			])
+		);
+
+		assert_eq!(
+			result.queries,
+			HashMap::from([
+				(String::from("name"), String::new()),
+				(String::from("ordering"), String::from("-index")),
+				(String::from("limit"), String::from("50")),
+				(String::from("offset"), String::from("0")),
+				(String::from("is_hidden"), String::from("false")),
+			])
+		);
 	}
 
 	#[test]
@@ -239,7 +289,6 @@ mod tests {
 		assert_eq!(result.url, "https://api.example.ru/api/projects/6a3c6b7d/");
 		assert_eq!(result.method, HttpMethod::Delete);
 
-		#[rustfmt::skip]
 		assert_eq!(
 			result.headers,
 			HashMap::from([

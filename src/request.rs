@@ -10,6 +10,7 @@ pub struct HttpRequest {
 	pub method: HttpMethod,
 	pub url: String,
 	pub headers: HashMap<String, String>,
+	pub queries: HashMap<String, String>,
 	pub body: String,
 	pub created_at: chrono::DateTime<chrono::Utc>,
 }
@@ -21,6 +22,7 @@ impl HttpRequest {
 			method: HttpMethod::Get,
 			url: String::new(),
 			headers: HashMap::new(),
+			queries: HashMap::new(),
 			body: String::new(),
 			created_at: chrono::Utc::now(),
 		}
@@ -38,6 +40,11 @@ impl HttpRequest {
 
 	pub fn with_header(mut self, key: String, value: String) -> Self {
 		self.headers.insert(key, value);
+		self
+	}
+
+	pub fn with_query(mut self, key: String, value: String) -> Self {
+		self.queries.insert(key, value);
 		self
 	}
 
@@ -60,6 +67,10 @@ impl HttpRequest {
 
 	pub fn formatted_headers(&self) -> String {
 		self.headers.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
+	}
+
+	pub fn formatted_queries(&self) -> String {
+		self.queries.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
 	}
 }
 
