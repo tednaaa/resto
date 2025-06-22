@@ -68,6 +68,10 @@ impl HttpRequest {
 	pub fn formatted_headers(&self) -> String {
 		self.headers.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
 	}
+
+	pub fn formatted_queries(&self) -> String {
+		self.queries.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
+	}
 }
 
 impl Default for HttpRequest {

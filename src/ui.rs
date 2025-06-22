@@ -222,7 +222,7 @@ fn draw_request_tab(frame: &mut Frame, area: Rect, app: &App) {
 	match app.request_section_active_tab {
 		RequestSectionTab::Headers => draw_request_headers_tab(frame, request_section_chunks[1], app),
 		RequestSectionTab::Body => draw_request_body_tab(frame, request_section_chunks[1], app),
-		RequestSectionTab::Query => {},
+		RequestSectionTab::Query => draw_request_queries_tab(frame, request_section_chunks[1], app),
 	}
 
 	frame.render_widget(response_section_tabs_widget, response_section_chunks[0]);
@@ -303,6 +303,25 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(body_widget, area);
+	}
+}
+
+fn draw_request_queries_tab(frame: &mut Frame, area: Rect, app: &App) {
+	if matches!(app.state, AppState::EditingQueries) {
+		frame.render_widget(app.get_queries_textarea(), area);
+	} else {
+		let queries_text =
+			if app.current_request.queries.is_empty() { "" } else { &app.current_request.formatted_queries() };
+
+		let queries_style = Style::default().fg(Color::White);
+
+		let queries_widget = Paragraph::new(queries_text).style(queries_style).wrap(Wrap { trim: true }).block(
+			Block::default()
+				.borders(Borders::ALL)
+				.title("( press 'q' to edit )")
+				.border_style(Style::default().fg(Color::White)),
+		);
+		frame.render_widget(queries_widget, area);
 	}
 }
 

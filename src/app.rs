@@ -18,6 +18,7 @@ pub enum AppState {
 	EditingUrl,
 	EditingHeaders,
 	EditingBody,
+	EditingQueries,
 	ViewingResponse,
 	Help,
 }
@@ -116,6 +117,7 @@ pub struct App {
 	pub url_textarea: TextArea<'static>,
 	pub headers_textarea: TextArea<'static>,
 	pub body_textarea: TextArea<'static>,
+	pub queries_textarea: TextArea<'static>,
 
 	pub http_client: HttpClient,
 	pub loading: bool,
@@ -136,6 +138,7 @@ impl App {
 		let url_textarea = TextArea::default();
 		let headers_textarea = TextArea::default();
 		let body_textarea = TextArea::default();
+		let queries_textarea = TextArea::default();
 
 		let vim = Vim::new(Mode::Normal);
 
@@ -147,9 +150,12 @@ impl App {
 			current_request: HttpRequest::new(),
 			responses: Vec::new(),
 			selected_response: None,
+
 			url_textarea,
 			headers_textarea,
 			body_textarea,
+			queries_textarea,
+
 			http_client: HttpClient::new(),
 			loading: false,
 			error_message: None,
@@ -225,9 +231,9 @@ impl App {
 	#[allow(clippy::unnecessary_wraps)]
 	fn handle_normal_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		match key.code {
-			KeyCode::Char('q') => {
-				return Ok(true); // Signal quit
-			},
+			// KeyCode::Char('q') => {
+			// 	return Ok(true); // Signal quit
+			// },
 			KeyCode::Tab => self.next_tab(),
 			KeyCode::BackTab => self.previous_tab(),
 			KeyCode::Char(']') => self.request_section_next_tab(),
@@ -273,6 +279,22 @@ impl App {
 				} else {
 					self.vim = Vim::new(Mode::Normal);
 					TextArea::from(self.current_request.body.lines().collect::<Vec<_>>())
+				};
+
+				self.setup_textarea_for_vim();
+			},
+			KeyCode::Char('q') => {
+				self.state = AppState::EditingQueries;
+				self.input_mode = InputMode::Editing;
+
+				let queries_text = self.current_request.formatted_queries();
+
+				self.queries_textarea = if queries_text.is_empty() {
+					self.vim = Vim::new(Mode::Insert);
+					TextArea::default()
+				} else {
+					self.vim = Vim::new(Mode::Normal);
+					TextArea::from(queries_text.lines().collect::<Vec<_>>())
 				};
 
 				self.setup_textarea_for_vim();
@@ -355,6 +377,7 @@ impl App {
 			AppState::EditingUrl => &mut self.url_textarea,
 			AppState::EditingHeaders => &mut self.headers_textarea,
 			AppState::EditingBody => &mut self.body_textarea,
+			AppState::EditingQueries => &mut self.queries_textarea,
 			_ => return Ok(false),
 		};
 
@@ -404,6 +427,18 @@ impl App {
 			AppState::EditingBody => {
 				self.current_request.body = self.body_textarea.lines().join("\n");
 			},
+			AppState::EditingQueries => {
+				self.current_request.queries.clear();
+				for line in self.queries_textarea.lines() {
+					if let Some((key, value)) = line.split_once(':') {
+						let key = key.trim().to_string();
+						let value = value.trim().to_string();
+						if !key.is_empty() && !value.is_empty() {
+							self.current_request.queries.insert(key, value);
+						}
+					}
+				}
+			},
 			_ => {},
 		}
 
@@ -415,6 +450,7 @@ impl App {
 			AppState::EditingUrl => &mut self.url_textarea,
 			AppState::EditingHeaders => &mut self.headers_textarea,
 			AppState::EditingBody => &mut self.body_textarea,
+			AppState::EditingQueries => &mut self.queries_textarea,
 			_ => return,
 		};
 
@@ -429,6 +465,10 @@ impl App {
 			AppState::EditingBody => {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
 				textarea.set_placeholder_text("Request body (JSON, text, etc.)");
+			},
+			AppState::EditingQueries => {
+				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
+				textarea.set_placeholder_text("name: Joe ....");
 			},
 			_ => {},
 		}
@@ -497,5 +537,9 @@ impl App {
 
 	pub const fn get_body_textarea(&self) -> &TextArea<'static> {
 		&self.body_textarea
+	}
+
+	pub const fn get_queries_textarea(&self) -> &TextArea<'static> {
+		&self.queries_textarea
 	}
 }
