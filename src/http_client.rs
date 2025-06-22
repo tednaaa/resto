@@ -6,6 +6,7 @@ use crate::app::HttpMethod;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
 
+#[derive(Clone)]
 pub struct HttpClient {
 	client: Client,
 }

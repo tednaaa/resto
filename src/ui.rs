@@ -313,17 +313,19 @@ fn create_response_block() -> Block<'static> {
 		.border_style(Style::default().fg(Color::White))
 }
 
-fn create_no_response_widget() -> Paragraph<'static> {
-	Paragraph::new("No response yet\nSend a request to see the response here")
-		.style(Style::default().fg(Color::Gray))
-		.alignment(Alignment::Center)
-		.block(create_response_block())
-}
-
 fn render_response_content<F>(frame: &mut Frame, area: Rect, app: &App, content_fn: F)
 where
 	F: FnOnce(&HttpResponse) -> String,
 {
+	if app.loading {
+		let widget = Paragraph::new("loading...")
+			.style(Style::default().fg(Color::White))
+			.alignment(Alignment::Center)
+			.block(create_response_block());
+		frame.render_widget(widget, area);
+		return;
+	}
+
 	if let Some(response) = app.get_current_response() {
 		let content = content_fn(response);
 		let status_text = app.get_current_response().map_or(String::new(), |response| {
@@ -342,7 +344,11 @@ where
 			.block(create_response_block().title(status_text));
 		frame.render_widget(widget, area);
 	} else {
-		frame.render_widget(create_no_response_widget(), area);
+		let widget = Paragraph::new("No response yet\nSend a request to see the response here")
+			.style(Style::default().fg(Color::Gray))
+			.alignment(Alignment::Center)
+			.block(create_response_block());
+		frame.render_widget(widget, area);
 	}
 }
 

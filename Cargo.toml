@@ -19,6 +19,7 @@ missing_errors_doc = "warn"
 missing_panics_doc = "warn"
 missing_safety_doc = "warn"
 
+too_many_lines = "allow"
 unused_self = "allow"
 cast_possible_truncation = "allow"
 cast_precision_loss = "allow"
