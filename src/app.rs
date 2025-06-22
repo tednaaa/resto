@@ -231,16 +231,16 @@ impl App {
 	#[allow(clippy::unnecessary_wraps)]
 	fn handle_normal_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		match key.code {
-			// KeyCode::Char('q') => {
-			// 	return Ok(true); // Signal quit
-			// },
+			KeyCode::Char('q') => {
+				return Ok(true); // Signal quit
+			},
 			KeyCode::Tab => self.next_tab(),
 			KeyCode::BackTab => self.previous_tab(),
 			KeyCode::Char(']') => self.request_section_next_tab(),
 			KeyCode::Char('[') => self.request_section_previous_tab(),
 			KeyCode::Char('}') => self.response_section_next_tab(),
 			KeyCode::Char('{') => self.response_section_previous_tab(),
-			KeyCode::Char('u') => {
+			KeyCode::Char('U') => {
 				self.state = AppState::EditingUrl;
 				self.input_mode = InputMode::Editing;
 				self.url_textarea = TextArea::from([self.current_request.url.as_str()]);
@@ -253,7 +253,7 @@ impl App {
 
 				self.setup_textarea_for_vim();
 			},
-			KeyCode::Char('h') => {
+			KeyCode::Char('H') => {
 				self.state = AppState::EditingHeaders;
 				self.input_mode = InputMode::Editing;
 
@@ -269,7 +269,7 @@ impl App {
 
 				self.setup_textarea_for_vim();
 			},
-			KeyCode::Char('b') => {
+			KeyCode::Char('B') => {
 				self.state = AppState::EditingBody;
 				self.input_mode = InputMode::Editing;
 
@@ -283,7 +283,7 @@ impl App {
 
 				self.setup_textarea_for_vim();
 			},
-			KeyCode::Char('q') => {
+			KeyCode::Char('Q') => {
 				self.state = AppState::EditingQueries;
 				self.input_mode = InputMode::Editing;
 

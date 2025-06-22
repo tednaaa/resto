@@ -261,7 +261,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("URL ( press 'u' to edit )")
+				.title("URL ( press 'U' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(url_widget, chunks[1]);
@@ -280,7 +280,7 @@ fn draw_request_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let headers_widget = Paragraph::new(headers_text).style(headers_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'h' to edit )")
+				.title("( press 'H' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(headers_widget, area);
@@ -299,7 +299,7 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let body_widget = Paragraph::new(body_text).style(body_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'b' to edit )")
+				.title("( press 'B' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(body_widget, area);
@@ -318,7 +318,7 @@ fn draw_request_queries_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let queries_widget = Paragraph::new(queries_text).style(queries_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'q' to edit )")
+				.title("( press 'Q' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(queries_widget, area);
