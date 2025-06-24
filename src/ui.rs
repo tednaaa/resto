@@ -280,7 +280,7 @@ fn draw_request_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let headers_widget = Paragraph::new(headers_text).style(headers_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'H' to edit )")
+				.title("( press 'e' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(headers_widget, area);
@@ -299,7 +299,7 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let body_widget = Paragraph::new(body_text).style(body_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'B' to edit )")
+				.title("( press 'e' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(body_widget, area);
@@ -318,7 +318,7 @@ fn draw_request_queries_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let queries_widget = Paragraph::new(queries_text).style(queries_style).wrap(Wrap { trim: true }).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("( press 'Q' to edit )")
+				.title("( press 'e' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(queries_widget, area);
