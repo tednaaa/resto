@@ -4,7 +4,7 @@ use ratatui::{
 	style::{Color, Modifier, Style},
 	symbols,
 	text::{Line, Span},
-	widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Tabs, Wrap},
+	widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Tabs},
 };
 
 use crate::{
@@ -277,7 +277,7 @@ fn draw_request_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
 
 		let headers_style = Style::default().fg(Color::White);
 
-		let headers_widget = Paragraph::new(headers_text).style(headers_style).wrap(Wrap { trim: true }).block(
+		let headers_widget = Paragraph::new(headers_text).style(headers_style).block(
 			Block::default()
 				.borders(Borders::ALL)
 				.title("( press 'e' to edit )")
@@ -296,7 +296,7 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 		let body_style =
 			if app.current_request.has_body() { Style::default().fg(Color::White) } else { Style::default().fg(Color::Gray) };
 
-		let body_widget = Paragraph::new(body_text).style(body_style).wrap(Wrap { trim: true }).block(
+		let body_widget = Paragraph::new(body_text).style(body_style).block(
 			Block::default()
 				.borders(Borders::ALL)
 				.title("( press 'e' to edit )")
@@ -315,7 +315,7 @@ fn draw_request_queries_tab(frame: &mut Frame, area: Rect, app: &App) {
 
 		let queries_style = Style::default().fg(Color::White);
 
-		let queries_widget = Paragraph::new(queries_text).style(queries_style).wrap(Wrap { trim: true }).block(
+		let queries_widget = Paragraph::new(queries_text).style(queries_style).block(
 			Block::default()
 				.borders(Borders::ALL)
 				.title("( press 'e' to edit )")
@@ -359,7 +359,6 @@ where
 
 		let widget = Paragraph::new(content)
 			.style(Style::default().fg(Color::White))
-			.wrap(Wrap { trim: true })
 			.block(create_response_block().title(status_text));
 		frame.render_widget(widget, area);
 	} else {
@@ -480,7 +479,6 @@ fn draw_help(frame: &mut Frame, area: Rect) {
 
 	let help_paragraph = Paragraph::new(help_text.join("\n"))
 		.style(Style::default().fg(Color::White))
-		.wrap(Wrap { trim: true })
 		.block(Block::default().borders(Borders::ALL).title("Help").border_style(Style::default().fg(Color::Yellow)));
 	frame.render_widget(help_paragraph, area);
 }
