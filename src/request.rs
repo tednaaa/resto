@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::app::HttpMethod;
+use crate::{app::HttpMethod, utils::format_key_values::format_key_values};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpRequest {
@@ -66,11 +66,11 @@ impl HttpRequest {
 	}
 
 	pub fn formatted_headers(&self) -> String {
-		self.headers.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
+		format_key_values(&self.headers)
 	}
 
 	pub fn formatted_queries(&self) -> String {
-		self.queries.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
+		format_key_values(&self.queries)
 	}
 }
 
