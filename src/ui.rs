@@ -281,6 +281,7 @@ fn draw_request_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
 			Block::default()
 				.borders(Borders::ALL)
 				.title("( press 'e' to edit )")
+				.padding(Padding::symmetric(2, 1))
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(headers_widget, area);
@@ -300,6 +301,7 @@ fn draw_request_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 			Block::default()
 				.borders(Borders::ALL)
 				.title("( press 'e' to edit )")
+				.padding(Padding::symmetric(2, 1))
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(body_widget, area);
@@ -319,6 +321,7 @@ fn draw_request_queries_tab(frame: &mut Frame, area: Rect, app: &App) {
 			Block::default()
 				.borders(Borders::ALL)
 				.title("( press 'e' to edit )")
+				.padding(Padding::symmetric(2, 1))
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(queries_widget, area);
