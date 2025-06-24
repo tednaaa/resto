@@ -261,7 +261,7 @@ fn draw_method_url_section(frame: &mut Frame, area: Rect, app: &App) {
 		let url_widget = Paragraph::new(url_text).style(url_style).block(
 			Block::default()
 				.borders(Borders::ALL)
-				.title("URL ( press 'U' to edit )")
+				.title("URL ( press 'u' to edit )")
 				.border_style(Style::default().fg(Color::White)),
 		);
 		frame.render_widget(url_widget, chunks[1]);

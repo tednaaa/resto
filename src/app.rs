@@ -240,7 +240,7 @@ impl App {
 			KeyCode::Char('[') => self.request_section_previous_tab(),
 			KeyCode::Char('}') => self.response_section_next_tab(),
 			KeyCode::Char('{') => self.response_section_previous_tab(),
-			KeyCode::Char('U') => {
+			KeyCode::Char('u') => {
 				self.state = AppState::EditingUrl;
 				self.input_mode = InputMode::Editing;
 				self.url_textarea = TextArea::from([self.current_request.url.as_str()]);
