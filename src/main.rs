@@ -17,6 +17,7 @@ mod logger;
 mod request;
 mod response;
 mod ui;
+mod utils;
 mod vim;
 
 use app::App;

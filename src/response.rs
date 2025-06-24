@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
 
+use crate::utils::format_key_values::format_key_values;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpResponse {
 	pub id: String,
@@ -70,7 +72,7 @@ impl HttpResponse {
 	}
 
 	pub fn formatted_headers(&self) -> String {
-		self.headers.iter().map(|(key, value)| format!("{key}: {value}")).collect::<Vec<_>>().join("\n")
+		format_key_values(&self.headers)
 	}
 
 	pub fn pretty_json(&self) -> anyhow::Result<String, serde_json::Error> {
