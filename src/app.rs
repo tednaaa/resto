@@ -253,50 +253,48 @@ impl App {
 
 				self.setup_textarea_for_vim();
 			},
-			KeyCode::Char('H') => {
-				self.state = AppState::EditingHeaders;
+			KeyCode::Char('e') => {
+				match self.request_section_active_tab {
+					RequestSectionTab::Headers => {
+						self.state = AppState::EditingHeaders;
+
+						let headers_text = self.current_request.formatted_headers();
+
+						self.headers_textarea = if headers_text.is_empty() {
+							self.vim = Vim::new(Mode::Insert);
+							TextArea::default()
+						} else {
+							self.vim = Vim::new(Mode::Normal);
+							TextArea::from(headers_text.lines().collect::<Vec<_>>())
+						};
+					},
+					RequestSectionTab::Body => {
+						self.state = AppState::EditingBody;
+
+						self.body_textarea = if self.current_request.body.is_empty() {
+							self.vim = Vim::new(Mode::Insert);
+							TextArea::default()
+						} else {
+							self.vim = Vim::new(Mode::Normal);
+							TextArea::from(self.current_request.body.lines().collect::<Vec<_>>())
+						};
+					},
+					RequestSectionTab::Query => {
+						self.state = AppState::EditingQueries;
+
+						let queries_text = self.current_request.formatted_queries();
+
+						self.queries_textarea = if queries_text.is_empty() {
+							self.vim = Vim::new(Mode::Insert);
+							TextArea::default()
+						} else {
+							self.vim = Vim::new(Mode::Normal);
+							TextArea::from(queries_text.lines().collect::<Vec<_>>())
+						};
+					},
+				}
+
 				self.input_mode = InputMode::Editing;
-
-				let headers_text = self.current_request.formatted_headers();
-
-				self.headers_textarea = if headers_text.is_empty() {
-					self.vim = Vim::new(Mode::Insert);
-					TextArea::default()
-				} else {
-					self.vim = Vim::new(Mode::Normal);
-					TextArea::from(headers_text.lines().collect::<Vec<_>>())
-				};
-
-				self.setup_textarea_for_vim();
-			},
-			KeyCode::Char('B') => {
-				self.state = AppState::EditingBody;
-				self.input_mode = InputMode::Editing;
-
-				self.body_textarea = if self.current_request.body.is_empty() {
-					self.vim = Vim::new(Mode::Insert);
-					TextArea::default()
-				} else {
-					self.vim = Vim::new(Mode::Normal);
-					TextArea::from(self.current_request.body.lines().collect::<Vec<_>>())
-				};
-
-				self.setup_textarea_for_vim();
-			},
-			KeyCode::Char('Q') => {
-				self.state = AppState::EditingQueries;
-				self.input_mode = InputMode::Editing;
-
-				let queries_text = self.current_request.formatted_queries();
-
-				self.queries_textarea = if queries_text.is_empty() {
-					self.vim = Vim::new(Mode::Insert);
-					TextArea::default()
-				} else {
-					self.vim = Vim::new(Mode::Normal);
-					TextArea::from(queries_text.lines().collect::<Vec<_>>())
-				};
-
 				self.setup_textarea_for_vim();
 			},
 			KeyCode::Char('m') => {
