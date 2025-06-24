@@ -48,8 +48,8 @@ impl std::str::FromStr for HttpMethod {
 			"GET" => Ok(Self::Get),
 			"POST" => Ok(Self::Post),
 			"PUT" => Ok(Self::Put),
-			"DELETE" => Ok(Self::Delete),
 			"PATCH" => Ok(Self::Patch),
+			"DELETE" => Ok(Self::Delete),
 			"HEAD" => Ok(Self::Head),
 			"OPTIONS" => Ok(Self::Options),
 			_ => Err(format!("Unknown HTTP method: {s}")),
@@ -63,8 +63,8 @@ impl HttpMethod {
 			Self::Get => "GET",
 			Self::Post => "POST",
 			Self::Put => "PUT",
-			Self::Delete => "DELETE",
 			Self::Patch => "PATCH",
+			Self::Delete => "DELETE",
 			Self::Head => "HEAD",
 			Self::Options => "OPTIONS",
 		}
@@ -86,9 +86,9 @@ impl HttpMethod {
 		match self {
 			Self::Get => Self::Post,
 			Self::Post => Self::Put,
-			Self::Put => Self::Delete,
-			Self::Delete => Self::Patch,
-			Self::Patch => Self::Head,
+			Self::Put => Self::Patch,
+			Self::Patch => Self::Delete,
+			Self::Delete => Self::Head,
 			Self::Head => Self::Options,
 			Self::Options => Self::Get,
 		}
@@ -99,9 +99,9 @@ impl HttpMethod {
 			Self::Get => Self::Options,
 			Self::Post => Self::Get,
 			Self::Put => Self::Post,
-			Self::Delete => Self::Put,
-			Self::Patch => Self::Delete,
-			Self::Head => Self::Patch,
+			Self::Patch => Self::Put,
+			Self::Delete => Self::Patch,
+			Self::Head => Self::Delete,
 			Self::Options => Self::Head,
 		}
 	}
