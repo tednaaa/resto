@@ -388,7 +388,11 @@ fn draw_response_body_tab(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_response_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
-	render_response_content(frame, area, app, HttpResponse::formatted_headers);
+	if matches!(app.state, AppState::InspectingResponseHeaders) {
+		frame.render_widget(app.get_response_headers_textarea(), area);
+	} else {
+		render_response_content(frame, area, app, HttpResponse::formatted_headers);
+	}
 }
 
 fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
