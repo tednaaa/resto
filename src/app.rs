@@ -19,7 +19,8 @@ pub enum AppState {
 	EditingHeaders,
 	EditingBody,
 	EditingQueries,
-	ViewingResponse,
+	InspectingResponseBody,
+	InspectingResponseHeaders,
 	Help,
 }
 
@@ -118,6 +119,8 @@ pub struct App {
 	pub headers_textarea: TextArea<'static>,
 	pub body_textarea: TextArea<'static>,
 	pub queries_textarea: TextArea<'static>,
+	pub response_body_textarea: TextArea<'static>,
+	pub response_headers_textarea: TextArea<'static>,
 
 	pub http_client: HttpClient,
 	pub loading: bool,
@@ -139,6 +142,8 @@ impl App {
 		let headers_textarea = TextArea::default();
 		let body_textarea = TextArea::default();
 		let queries_textarea = TextArea::default();
+		let response_body_textarea = TextArea::default();
+		let response_headers_textarea = TextArea::default();
 
 		let vim = Vim::new(Mode::Normal);
 
@@ -155,6 +160,8 @@ impl App {
 			headers_textarea,
 			body_textarea,
 			queries_textarea,
+			response_body_textarea,
+			response_headers_textarea,
 
 			http_client: HttpClient::new(),
 			loading: false,
@@ -297,6 +304,48 @@ impl App {
 				self.input_mode = InputMode::Editing;
 				self.setup_textarea_for_vim();
 			},
+			KeyCode::Char('r') => {
+				let should_process = self.get_current_response().is_some();
+				let body_text = self.get_current_response().map_or_else(String::new, |response| {
+					if response.is_json() {
+						response.pretty_json().unwrap_or_else(|_| response.body.clone())
+					} else {
+						response.body.clone()
+					}
+				});
+				let headers_text = self.get_current_response().map_or_else(String::new, HttpResponse::formatted_headers);
+
+				if should_process {
+					match self.response_section_active_tab {
+						ResponseSectionTab::Body => {
+							self.state = AppState::InspectingResponseBody;
+
+							self.response_body_textarea = if body_text.is_empty() {
+								self.vim = Vim::new(Mode::Insert);
+								TextArea::default()
+							} else {
+								self.vim = Vim::new(Mode::Normal);
+								TextArea::from(body_text.lines().collect::<Vec<_>>())
+							};
+						},
+						ResponseSectionTab::Headers => {
+							self.state = AppState::InspectingResponseHeaders;
+
+							self.response_headers_textarea = if headers_text.is_empty() {
+								self.vim = Vim::new(Mode::Insert);
+								TextArea::default()
+							} else {
+								self.vim = Vim::new(Mode::Normal);
+								TextArea::from(headers_text.lines().collect::<Vec<_>>())
+							};
+						},
+						ResponseSectionTab::Cookies => panic!("not implemented yet"),
+					}
+
+					self.input_mode = InputMode::Editing;
+					self.setup_textarea_for_vim();
+				}
+			},
 			KeyCode::Char('m') => {
 				self.current_request.method = self.current_request.method.next();
 			},
@@ -307,9 +356,6 @@ impl App {
 				if !self.loading {
 					self.send_request();
 				}
-			},
-			KeyCode::Char('r') => {
-				self.state = AppState::ViewingResponse;
 			},
 			KeyCode::Char('?') => {
 				self.state = AppState::Help;
@@ -339,11 +385,6 @@ impl App {
 					} else {
 						self.selected_response = Some(0);
 					}
-				}
-			},
-			KeyCode::Esc => {
-				if matches!(self.state, AppState::Help | AppState::ViewingResponse) {
-					self.state = AppState::Normal;
 				}
 			},
 			_ => {},
@@ -376,7 +417,9 @@ impl App {
 			AppState::EditingHeaders => &mut self.headers_textarea,
 			AppState::EditingBody => &mut self.body_textarea,
 			AppState::EditingQueries => &mut self.queries_textarea,
-			_ => return Ok(false),
+			AppState::InspectingResponseBody => &mut self.response_body_textarea,
+			AppState::InspectingResponseHeaders => &mut self.response_headers_textarea,
+			AppState::Help | AppState::Normal => return Ok(false),
 		};
 
 		match self.vim.transition(input, textarea) {
@@ -437,7 +480,7 @@ impl App {
 					}
 				}
 			},
-			_ => {},
+			AppState::Help | AppState::Normal | AppState::InspectingResponseBody | AppState::InspectingResponseHeaders => {},
 		}
 
 		Ok(())
@@ -449,7 +492,9 @@ impl App {
 			AppState::EditingHeaders => &mut self.headers_textarea,
 			AppState::EditingBody => &mut self.body_textarea,
 			AppState::EditingQueries => &mut self.queries_textarea,
-			_ => return,
+			AppState::InspectingResponseBody => &mut self.response_body_textarea,
+			AppState::InspectingResponseHeaders => &mut self.response_headers_textarea,
+			AppState::Help | AppState::Normal => return,
 		};
 
 		match self.state {
@@ -468,7 +513,10 @@ impl App {
 				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
 				textarea.set_placeholder_text("name: Joe ....");
 			},
-			_ => {},
+			AppState::InspectingResponseBody | AppState::InspectingResponseHeaders => {
+				textarea.set_line_number_style(Style::default().bg(Color::DarkGray));
+			},
+			AppState::Help | AppState::Normal => {},
 		}
 
 		textarea.set_tab_length(2);
@@ -539,5 +587,13 @@ impl App {
 
 	pub const fn get_queries_textarea(&self) -> &TextArea<'static> {
 		&self.queries_textarea
+	}
+
+	pub const fn get_response_body_textarea(&self) -> &TextArea<'static> {
+		&self.response_body_textarea
+	}
+
+	pub const fn get_response_headers_textarea(&self) -> &TextArea<'static> {
+		&self.response_headers_textarea
 	}
 }

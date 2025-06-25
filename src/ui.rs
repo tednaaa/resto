@@ -3,7 +3,7 @@ use ratatui::{
 	layout::{Alignment, Constraint, Direction, Layout, Rect},
 	style::{Color, Modifier, Style},
 	symbols,
-	text::{Line, Span},
+	text::{Line, Span, ToSpan},
 	widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Tabs},
 };
 
@@ -360,9 +360,9 @@ where
 			)
 		});
 
-		let widget = Paragraph::new(content)
-			.style(Style::default().fg(Color::White))
-			.block(create_response_block().title(status_text));
+		let widget = Paragraph::new(content).style(Style::default().fg(Color::White)).block(
+			create_response_block().title("( press 'r' to inspect )").title(status_text.to_span().into_centered_line()),
+		);
 		frame.render_widget(widget, area);
 	} else {
 		let widget = Paragraph::new("No response yet\nSend a request to see the response here")
@@ -374,17 +374,25 @@ where
 }
 
 fn draw_response_body_tab(frame: &mut Frame, area: Rect, app: &App) {
-	render_response_content(frame, area, app, |response| {
-		if response.is_json() {
-			response.pretty_json().unwrap_or_else(|_| response.body.clone())
-		} else {
-			response.body.clone()
-		}
-	});
+	if matches!(app.state, AppState::InspectingResponseBody) {
+		frame.render_widget(app.get_response_body_textarea(), area);
+	} else {
+		render_response_content(frame, area, app, |response| {
+			if response.is_json() {
+				response.pretty_json().unwrap_or_else(|_| response.body.clone())
+			} else {
+				response.body.clone()
+			}
+		});
+	}
 }
 
 fn draw_response_headers_tab(frame: &mut Frame, area: Rect, app: &App) {
-	render_response_content(frame, area, app, HttpResponse::formatted_headers);
+	if matches!(app.state, AppState::InspectingResponseHeaders) {
+		frame.render_widget(app.get_response_headers_textarea(), area);
+	} else {
+		render_response_content(frame, area, app, HttpResponse::formatted_headers);
+	}
 }
 
 fn draw_history_tab(frame: &mut Frame, area: Rect, app: &App) {
