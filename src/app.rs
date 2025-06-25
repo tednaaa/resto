@@ -372,11 +372,6 @@ impl App {
 					}
 				}
 			},
-			KeyCode::Esc => {
-				if matches!(self.state, AppState::Help | AppState::InspectingResponseBody) {
-					self.state = AppState::Normal;
-				}
-			},
 			_ => {},
 		}
 		Ok(false)
