@@ -2,8 +2,12 @@
 
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders};
+use std::cell::RefCell;
 use std::fmt;
+use std::rc::Rc;
 use tui_textarea::{CursorMove, Input, Key, Scrolling, TextArea};
+
+use arboard::Clipboard;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -62,15 +66,18 @@ pub enum Transition {
 pub struct Vim {
 	pub mode: Mode,
 	pub pending: Input, // Pending input to handle a sequence with two keys like gg
+	pub clipboard: Rc<RefCell<Clipboard>>,
 }
 
 impl Vim {
 	pub fn new(mode: Mode) -> Self {
-		Self { mode, pending: Input::default() }
+		let clipboard = Rc::new(RefCell::new(Clipboard::new().expect("failed to init clipboard")));
+
+		Self { mode, pending: Input::default(), clipboard }
 	}
 
-	pub const fn with_pending(self, pending: Input) -> Self {
-		Self { mode: self.mode, pending }
+	pub fn with_pending(self, pending: Input) -> Self {
+		Self { pending, mode: self.mode, clipboard: self.clipboard }
 	}
 
 	pub fn transition(&self, input: Input, textarea: &mut TextArea<'_>) -> Transition {
@@ -186,22 +193,23 @@ impl Vim {
 							textarea.move_cursor(CursorMove::End); // At the last line, move to end of the line instead
 						}
 					},
-					Input { key: Key::Char(op @ ('y' | 'd' | 'c')), ctrl: false, .. } if self.mode == Mode::Normal => {
+					Input { key: Key::Char(operator @ ('y' | 'd' | 'c')), ctrl: false, .. } if self.mode == Mode::Normal => {
 						textarea.start_selection();
-						return Transition::Mode(Mode::Operator(op));
+						return Transition::Mode(Mode::Operator(operator));
 					},
 					Input { key: Key::Char('y'), ctrl: false, .. } if self.mode == Mode::Visual => {
-						textarea.move_cursor(CursorMove::Forward); // Vim's text selection is inclusive
+						textarea.move_cursor(CursorMove::Forward);
 						textarea.copy();
+						self.clipboard.borrow_mut().set_text(textarea.yank_text()).unwrap();
 						return Transition::Mode(Mode::Normal);
 					},
 					Input { key: Key::Char('d'), ctrl: false, .. } if self.mode == Mode::Visual => {
-						textarea.move_cursor(CursorMove::Forward); // Vim's text selection is inclusive
+						textarea.move_cursor(CursorMove::Forward);
 						textarea.cut();
 						return Transition::Mode(Mode::Normal);
 					},
 					Input { key: Key::Char('c'), ctrl: false, .. } if self.mode == Mode::Visual => {
-						textarea.move_cursor(CursorMove::Forward); // Vim's text selection is inclusive
+						textarea.move_cursor(CursorMove::Forward);
 						textarea.cut();
 						return Transition::Mode(Mode::Insert);
 					},
@@ -212,6 +220,7 @@ impl Vim {
 				match self.mode {
 					Mode::Operator('y') => {
 						textarea.copy();
+						self.clipboard.borrow_mut().set_text(textarea.yank_text()).unwrap();
 						Transition::Mode(Mode::Normal)
 					},
 					Mode::Operator('d') => {
