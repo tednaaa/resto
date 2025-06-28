@@ -63,7 +63,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				if i >= tokens.len() {
 					return Err(CurlParseError::InvalidFormat("Missing data after -d".to_string()).into());
 				}
-				request = request.with_body(&tokens[i])?;
+				request.set_body(&tokens[i])?;
 				if matches!(request.method, HttpMethod::Get) {
 					request = request.with_method(HttpMethod::Post);
 				}
@@ -73,7 +73,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				if i >= tokens.len() {
 					return Err(CurlParseError::InvalidFormat("Missing data after --data-binary".to_string()).into());
 				}
-				request = request.with_body(&tokens[i])?;
+				request.set_body(&tokens[i])?;
 				if matches!(request.method, HttpMethod::Get) {
 					request = request.with_method(HttpMethod::Post);
 				}

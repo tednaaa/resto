@@ -48,10 +48,10 @@ impl HttpRequest {
 		self
 	}
 
-	pub fn with_body(mut self, body: &str) -> anyhow::Result<Self> {
+	pub fn set_body(&mut self, body: &str) -> anyhow::Result<()> {
 		let json_value: serde_json::Value = serde_json::from_str(body)?;
 		self.body = serde_json::to_string_pretty(&json_value)?;
-		Ok(self)
+		Ok(())
 	}
 
 	pub fn is_valid(&self) -> bool {

@@ -466,7 +466,8 @@ impl App {
 				}
 			},
 			AppState::EditingBody => {
-				self.current_request.with_body(&self.body_textarea.lines().join("\n"));
+				let body_content = self.body_textarea.lines().join("\n");
+				self.current_request.set_body(&body_content)?;
 			},
 			AppState::EditingQueries => {
 				self.current_request.queries.clear();
