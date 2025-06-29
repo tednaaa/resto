@@ -59,7 +59,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut
 						}
 					},
 					Event::Paste(text) => {
-						app.handle_paste(text)?;
+						app.handle_paste(&text)?;
 					},
 					_ => {},
 				}

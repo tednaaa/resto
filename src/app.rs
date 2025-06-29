@@ -223,7 +223,7 @@ impl App {
 		}
 	}
 
-	pub fn handle_paste(&mut self, text: String) -> anyhow::Result<()> {
+	pub fn handle_paste(&mut self, text: &str) -> anyhow::Result<()> {
 		if self.state == AppState::EditingUrl {
 			self.url_textarea.insert_str(text);
 			self.save_current_textarea_content()?;
@@ -250,7 +250,7 @@ impl App {
 			KeyCode::Char('u') => {
 				self.state = AppState::EditingUrl;
 				self.input_mode = InputMode::Editing;
-				self.url_textarea = TextArea::from([self.current_request.url.as_str()]);
+				self.url_textarea = TextArea::from([&self.current_request.url]);
 
 				if self.current_request.url.is_empty() {
 					self.vim = Vim::new(Mode::Insert);
@@ -460,13 +460,14 @@ impl App {
 						let key = key.trim().to_string();
 						let value = value.trim().to_string();
 						if !key.is_empty() && !value.is_empty() {
-							self.current_request.headers.insert(key, value);
+							self.current_request.add_header(key, value);
 						}
 					}
 				}
 			},
 			AppState::EditingBody => {
-				self.current_request.body = self.body_textarea.lines().join("\n");
+				let body_content = self.body_textarea.lines().join("\n");
+				self.current_request.set_body(&body_content)?;
 			},
 			AppState::EditingQueries => {
 				self.current_request.queries.clear();
@@ -475,7 +476,7 @@ impl App {
 						let key = key.trim().to_string();
 						let value = value.trim().to_string();
 						if !key.is_empty() && !value.is_empty() {
-							self.current_request.queries.insert(key, value);
+							self.current_request.add_query(key, value);
 						}
 					}
 				}
