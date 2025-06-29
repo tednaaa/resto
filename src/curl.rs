@@ -173,6 +173,8 @@ fn tokenize_curl_command(input: &str) -> anyhow::Result<Vec<String>> {
 mod tests {
 	use std::collections::HashMap;
 
+	use serde_json::json;
+
 	use super::*;
 
 	#[test]
@@ -237,7 +239,13 @@ mod tests {
 			])
 		);
 
-		assert_eq!(result.body, r#"{"name":"test","projectType":"DAILY","isActive":false}"#);
+		let expected_body = serde_json::to_string_pretty(&json!({
+				"isActive": false,
+				"name": "test",
+				"projectType": "DAILY"
+		}))
+		.unwrap();
+		assert_eq!(result.body, expected_body);
 	}
 
 	#[test]
