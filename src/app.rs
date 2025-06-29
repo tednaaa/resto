@@ -223,7 +223,7 @@ impl App {
 		}
 	}
 
-	pub fn handle_paste(&mut self, text: String) -> anyhow::Result<()> {
+	pub fn handle_paste(&mut self, text: &str) -> anyhow::Result<()> {
 		if self.state == AppState::EditingUrl {
 			self.url_textarea.insert_str(text);
 			self.save_current_textarea_content()?;

@@ -28,24 +28,20 @@ impl HttpRequest {
 		}
 	}
 
-	pub fn with_url(mut self, url: String) -> Self {
-		self.url = url;
-		self
+	pub fn set_url(&mut self, url: &str) {
+		self.url = String::from(url);
 	}
 
-	pub const fn with_method(mut self, method: HttpMethod) -> Self {
+	pub const fn set_method(&mut self, method: HttpMethod) {
 		self.method = method;
-		self
 	}
 
-	pub fn with_header(mut self, key: String, value: String) -> Self {
+	pub fn add_header(&mut self, key: String, value: String) {
 		self.headers.insert(key, value);
-		self
 	}
 
-	pub fn with_query(mut self, key: String, value: String) -> Self {
+	pub fn add_query(&mut self, key: String, value: String) {
 		self.queries.insert(key, value);
-		self
 	}
 
 	pub fn set_body(&mut self, body: &str) -> anyhow::Result<()> {

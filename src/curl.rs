@@ -23,18 +23,14 @@ impl std::error::Error for CurlParseError {}
 
 pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 	let mut input = input.trim();
-
 	if let Some(inp) = input.strip_prefix("curl ") {
 		input = inp.trim();
 	}
-
 	let mut request = HttpRequest::new();
 	let tokens = tokenize_curl_command(input)?;
 	let mut i = 0;
-
 	while i < tokens.len() {
 		let token = &tokens[i];
-
 		match token.as_str() {
 			"-X" | "--request" => {
 				i += 1;
@@ -42,7 +38,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 					return Err(CurlParseError::InvalidFormat("Missing method after -X".to_string()).into());
 				}
 				let method = tokens[i].parse::<HttpMethod>().map_err(|_| CurlParseError::InvalidMethod(tokens[i].clone()))?;
-				request = request.with_method(method);
+				request.set_method(method);
 			},
 			"-H" | "--header" => {
 				i += 1;
@@ -53,7 +49,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				if let Some(colon_pos) = header_str.find(':') {
 					let key = header_str[..colon_pos].trim().to_string();
 					let value = header_str[colon_pos + 1..].trim().to_string();
-					request = request.with_header(key, value);
+					request.add_header(key, value);
 				} else {
 					return Err(CurlParseError::InvalidHeader(header_str.clone()).into());
 				}
@@ -65,7 +61,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				}
 				request.set_body(&tokens[i])?;
 				if matches!(request.method, HttpMethod::Get) {
-					request = request.with_method(HttpMethod::Post);
+					request.set_method(HttpMethod::Post);
 				}
 			},
 			"--data-binary" => {
@@ -75,7 +71,7 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 				}
 				request.set_body(&tokens[i])?;
 				if matches!(request.method, HttpMethod::Get) {
-					request = request.with_method(HttpMethod::Post);
+					request.set_method(HttpMethod::Post);
 				}
 			},
 			"--compressed" | "-L" | "--location" | "-k" | "--insecure" | "-s" | "--silent" | "-v" | "--verbose" => {
@@ -84,35 +80,30 @@ pub fn parse_curl(input: &str) -> anyhow::Result<HttpRequest> {
 			_ => {
 				if token.starts_with("http") {
 					let url = token.clone();
-
 					if let Some(query_start) = url.find('?') {
 						let base_url = url[..query_start].to_string();
 						let query_str = &url[query_start + 1..];
-
 						for query_pair in query_str.split('&') {
 							if let Some(eq_pos) = query_pair.find('=') {
 								let key = query_pair[..eq_pos].to_string();
 								let value = query_pair[eq_pos + 1..].to_string();
-								request = request.with_query(key, value);
+								request.add_query(key, value);
 							} else if !query_pair.is_empty() {
-								request = request.with_query(query_pair.to_string(), String::new());
+								request.add_query(query_pair.to_string(), String::new());
 							}
 						}
-
-						request = request.with_url(base_url);
+						request.set_url(&base_url);
 					} else {
-						request = request.with_url(url);
+						request.set_url(&url);
 					}
 				}
 			},
 		}
 		i += 1;
 	}
-
 	if request.url.is_empty() {
 		return Err(CurlParseError::MissingUrl.into());
 	}
-
 	Ok(request)
 }
 
