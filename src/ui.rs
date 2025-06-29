@@ -10,6 +10,7 @@ use ratatui::{
 use crate::{
 	app::{App, AppState, InputMode},
 	response::HttpResponse,
+	vim,
 };
 
 pub fn draw(frame: &mut Frame, app: &App) {
@@ -445,12 +446,13 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 	let vim_mode_widget =
 		Paragraph::new(vim_mode_text).style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
 
-	let mut keybindings_widget = if matches!(app.input_mode, InputMode::Editing) {
-		Paragraph::new("Save: Enter | Cancel: Escape")
-	} else {
-		Paragraph::new("Help: ? | Switch tabs: Tab | Change method: m/M | Send request: Enter")
-	}
-	.style(Style::default().fg(Color::Yellow));
+	let keybindings_text = match (&app.vim.mode, &app.input_mode) {
+		(vim::Mode::Normal, InputMode::Editing) => "Save: Enter | Cancel: Escape",
+		(_, InputMode::Normal) => "Help: ? | Switch tabs: Tab | Change method: m/M | Send request: Enter",
+		_ => "",
+	};
+
+	let mut keybindings_widget = Paragraph::new(keybindings_text).style(Style::default().fg(Color::Yellow));
 
 	if let Some(error) = &app.error_message {
 		keybindings_widget = Paragraph::new(format!("Error: {error}")).style(Style::default().fg(Color::Red));
