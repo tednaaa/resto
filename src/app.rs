@@ -217,6 +217,10 @@ impl App {
 	}
 
 	pub fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
+		if self.state == AppState::Help && key.code == KeyCode::Esc {
+			self.state = AppState::Normal;
+		}
+
 		match self.input_mode {
 			InputMode::Normal => self.handle_normal_mode_key(key),
 			InputMode::Editing => self.handle_editing_mode_key(key),
