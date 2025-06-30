@@ -351,10 +351,10 @@ impl App {
 				}
 			},
 			KeyCode::Char('m') => {
-				self.current_request.method = self.current_request.method.next();
+				self.current_request.set_method(self.current_request.method.next());
 			},
 			KeyCode::Char('M') => {
-				self.current_request.method = self.current_request.method.previous();
+				self.current_request.set_method(self.current_request.method.previous());
 			},
 			KeyCode::Enter => {
 				if !self.loading {
@@ -454,7 +454,7 @@ impl App {
 				if url_text.starts_with("curl") {
 					self.current_request = parse_curl(&url_text)?;
 				} else {
-					self.current_request.url = url_text;
+					self.current_request.set_url(&url_text);
 				}
 			},
 			AppState::EditingHeaders => {

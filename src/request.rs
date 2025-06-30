@@ -29,7 +29,11 @@ impl HttpRequest {
 	}
 
 	pub fn set_url(&mut self, url: &str) {
-		self.url = String::from(url);
+		if url.starts_with("http") {
+			self.url = String::from(url);
+		} else {
+			self.url = format!("https://{url}");
+		}
 	}
 
 	pub const fn set_method(&mut self, method: HttpMethod) {
