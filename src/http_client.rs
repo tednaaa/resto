@@ -16,6 +16,7 @@ impl HttpClient {
 		let client = Client::builder()
 			.timeout(Duration::from_secs(30))
 			.user_agent(format!("{} HTTP Client/1.0", env!("CARGO_PKG_NAME")))
+			.cookie_store(true)
 			.build()
 			.unwrap_or_else(|_| Client::new());
 

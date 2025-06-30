@@ -1,5 +1,6 @@
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
+use reqwest_cookie_store::{CookieStore, CookieStoreRwLock};
 use tokio::sync::mpsc;
 use tui_textarea::{Input, TextArea};
 
@@ -122,6 +123,7 @@ pub struct App {
 	pub response_body_textarea: TextArea<'static>,
 	pub response_headers_textarea: TextArea<'static>,
 
+	pub cookies_store: CookieStoreRwLock,
 	pub http_client: HttpClient,
 	pub loading: bool,
 	pub error_message: Option<String>,
@@ -149,6 +151,8 @@ impl App {
 
 		let (response_tx, response_rx) = mpsc::unbounded_channel();
 
+		let cookies_store = CookieStore::new();
+
 		Self {
 			state: AppState::Normal,
 			input_mode: InputMode::Normal,
@@ -163,7 +167,9 @@ impl App {
 			response_body_textarea,
 			response_headers_textarea,
 
+			cookies_store,
 			http_client: HttpClient::new(),
+
 			loading: false,
 			error_message: None,
 			active_tab: MainContentTab::Request,
