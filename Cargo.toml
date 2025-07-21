@@ -5,11 +5,15 @@ edition = "2024"
 
 [workspace]
 resolver = "3"
-members = ["crates/http_client", "crates/tui"]
+members = ["crates/gui", "crates/tui"]
 
 
 [workspace.dependencies]
 gpui = { git = "https://github.com/zed-industries/zed" }
+ui = { git = "https://github.com/zed-industries/zed" }
+ui_input = { git = "https://github.com/zed-industries/zed" }
+vim = { git = "https://github.com/zed-industries/zed" }
+editor = { git = "https://github.com/zed-industries/zed" }
 
 
 [workspace.lints.clippy]

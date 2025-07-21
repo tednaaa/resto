@@ -7,5 +7,5 @@ cargo fmt
 > develop
 
 ```
-cargo build --bin http_client
+cargo build --bin gui
 ```
