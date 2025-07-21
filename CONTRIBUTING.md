@@ -7,5 +7,5 @@ cargo fmt
 > develop
 
 ```
-cargo run
+cargo build --bin http_client
 ```
