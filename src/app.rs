@@ -115,6 +115,8 @@ pub struct App {
 	pub responses: Vec<HttpResponse>,
 	pub selected_response: Option<usize>,
 
+	pub fullscreen_section: FullscreenSection,
+
 	pub url_textarea: TextArea<'static>,
 	pub headers_textarea: TextArea<'static>,
 	pub body_textarea: TextArea<'static>,
@@ -136,6 +138,12 @@ pub struct App {
 	response_tx: mpsc::UnboundedSender<RequestResult>,
 }
 
+pub enum FullscreenSection {
+	None,
+	Request,
+	Response,
+}
+
 impl App {
 	pub fn new() -> Self {
 		let url_textarea = TextArea::default();
@@ -155,6 +163,8 @@ impl App {
 			current_request: HttpRequest::new(),
 			responses: Vec::new(),
 			selected_response: None,
+
+			fullscreen_section: FullscreenSection::None,
 
 			url_textarea,
 			headers_textarea,
@@ -305,6 +315,7 @@ impl App {
 					},
 				}
 
+				self.fullscreen_section = FullscreenSection::Request;
 				self.input_mode = InputMode::Editing;
 				self.setup_textarea_for_vim();
 			},
@@ -346,6 +357,7 @@ impl App {
 						ResponseSectionTab::Cookies => panic!("not implemented yet"),
 					}
 
+					self.fullscreen_section = FullscreenSection::Response;
 					self.input_mode = InputMode::Editing;
 					self.setup_textarea_for_vim();
 				}
@@ -396,18 +408,22 @@ impl App {
 		Ok(false)
 	}
 
+	const fn reset_state(&mut self) {
+		self.fullscreen_section = FullscreenSection::None;
+		self.state = AppState::Normal;
+		self.input_mode = InputMode::Normal;
+	}
+
 	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
 		if self.vim.mode == Mode::Normal {
 			match key.code {
 				KeyCode::Enter => {
 					self.save_current_textarea_content()?;
-					self.state = AppState::Normal;
-					self.input_mode = InputMode::Normal;
+					self.reset_state();
 					return Ok(false);
 				},
 				KeyCode::Esc => {
-					self.state = AppState::Normal;
-					self.input_mode = InputMode::Normal;
+					self.reset_state();
 					return Ok(false);
 				},
 				_ => {},

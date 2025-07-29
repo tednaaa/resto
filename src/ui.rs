@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 use crate::{
-	app::{App, AppState, InputMode},
+	app::{App, AppState, FullscreenSection, InputMode},
 	response::HttpResponse,
 	vim,
 };
@@ -198,12 +198,18 @@ fn draw_request_tab(frame: &mut Frame, area: Rect, app: &App) {
 		.highlight_style(Style::default().fg(Color::Yellow))
 		.select(app.response_section_active_tab.as_index());
 
+	let (request_section_height, response_section_height) = match app.fullscreen_section {
+		FullscreenSection::None => (Constraint::Percentage(40), Constraint::Percentage(60)),
+		FullscreenSection::Request => (Constraint::Percentage(100), Constraint::Percentage(0)),
+		FullscreenSection::Response => (Constraint::Percentage(0), Constraint::Percentage(100)),
+	};
+
 	let chunks = Layout::default()
 		.direction(Direction::Vertical)
 		.constraints([
-			Constraint::Length(3),      // Method and URL
-			Constraint::Percentage(40), // Request section
-			Constraint::Percentage(60), // Response section
+			Constraint::Length(3),   // Method and URL
+			request_section_height,  // Request section
+			response_section_height, // Response section
 		])
 		.split(area);
 
