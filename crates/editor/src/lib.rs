@@ -1,1 +1,3 @@
-pub mod editor;
+mod editor;
+
+pub use editor::{Editor, EditorState};

@@ -6,7 +6,6 @@ use ratatui::{
 	text::{Line, Span, ToSpan},
 	widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Tabs},
 };
-use vim::vim;
 
 use crate::{
 	app::{App, AppState, FullscreenSection, InputMode},

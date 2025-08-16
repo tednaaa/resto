@@ -1,1 +1,3 @@
-pub mod vim;
+mod vim;
+
+pub use vim::{Mode, Transition, Vim};
