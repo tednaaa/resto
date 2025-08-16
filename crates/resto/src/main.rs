@@ -18,8 +18,6 @@ mod request;
 mod response;
 mod ui;
 mod utils;
-mod vim;
-mod widgets;
 
 use app::App;
 

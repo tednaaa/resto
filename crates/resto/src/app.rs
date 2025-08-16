@@ -2,13 +2,13 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
 use tokio::sync::mpsc;
 use tui_textarea::{Input, TextArea};
+use vim::vim::{Mode, Transition, Vim};
 
 use crate::curl::parse_curl;
 use crate::http_client::HttpClient;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
 use crate::ui::{MainContentTab, RequestSectionTab, ResponseSectionTab};
-use crate::vim::{Mode, Transition, Vim};
 
 pub type RequestResult = anyhow::Result<HttpResponse, String>;
 

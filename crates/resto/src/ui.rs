@@ -6,11 +6,11 @@ use ratatui::{
 	text::{Line, Span, ToSpan},
 	widgets::{Block, Borders, List, ListItem, Padding, Paragraph, Tabs},
 };
+use vim::vim;
 
 use crate::{
 	app::{App, AppState, FullscreenSection, InputMode},
 	response::HttpResponse,
-	vim,
 };
 
 pub fn draw(frame: &mut Frame, app: &App) {
