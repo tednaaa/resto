@@ -2,13 +2,13 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Style};
 use tokio::sync::mpsc;
 use tui_textarea::{Input, TextArea};
+use vim::Vim;
 
 use crate::curl::parse_curl;
 use crate::http_client::HttpClient;
 use crate::request::HttpRequest;
 use crate::response::HttpResponse;
 use crate::ui::{MainContentTab, RequestSectionTab, ResponseSectionTab};
-use crate::vim::{Mode, Transition, Vim};
 
 pub type RequestResult = anyhow::Result<HttpResponse, String>;
 
@@ -153,7 +153,7 @@ impl App {
 		let response_body_textarea = TextArea::default();
 		let response_headers_textarea = TextArea::default();
 
-		let vim = Vim::new(Mode::Normal);
+		let vim = Vim::new(vim::Mode::Normal);
 
 		let (response_tx, response_rx) = mpsc::unbounded_channel();
 
@@ -243,7 +243,7 @@ impl App {
 			self.save_current_textarea_content()?;
 			self.state = AppState::Normal;
 			self.input_mode = InputMode::Normal;
-			self.vim = Vim::new(Mode::Normal);
+			self.vim = Vim::new(vim::Mode::Normal);
 		}
 
 		Ok(())
@@ -267,9 +267,9 @@ impl App {
 				self.url_textarea = TextArea::from([&self.current_request.url]);
 
 				if self.current_request.url.is_empty() {
-					self.vim = Vim::new(Mode::Insert);
+					self.vim = Vim::new(vim::Mode::Insert);
 				} else {
-					self.vim = Vim::new(Mode::Normal);
+					self.vim = Vim::new(vim::Mode::Normal);
 				}
 
 				self.setup_textarea_for_vim();
@@ -282,10 +282,10 @@ impl App {
 						let headers_text = self.current_request.formatted_headers();
 
 						self.headers_textarea = if headers_text.is_empty() {
-							self.vim = Vim::new(Mode::Insert);
+							self.vim = Vim::new(vim::Mode::Insert);
 							TextArea::default()
 						} else {
-							self.vim = Vim::new(Mode::Normal);
+							self.vim = Vim::new(vim::Mode::Normal);
 							TextArea::from(headers_text.lines().collect::<Vec<_>>())
 						};
 					},
@@ -293,10 +293,10 @@ impl App {
 						self.state = AppState::EditingBody;
 
 						self.body_textarea = if self.current_request.body.is_empty() {
-							self.vim = Vim::new(Mode::Insert);
+							self.vim = Vim::new(vim::Mode::Insert);
 							TextArea::default()
 						} else {
-							self.vim = Vim::new(Mode::Normal);
+							self.vim = Vim::new(vim::Mode::Normal);
 							TextArea::from(self.current_request.body.lines().collect::<Vec<_>>())
 						};
 					},
@@ -306,10 +306,10 @@ impl App {
 						let queries_text = self.current_request.formatted_queries();
 
 						self.queries_textarea = if queries_text.is_empty() {
-							self.vim = Vim::new(Mode::Insert);
+							self.vim = Vim::new(vim::Mode::Insert);
 							TextArea::default()
 						} else {
-							self.vim = Vim::new(Mode::Normal);
+							self.vim = Vim::new(vim::Mode::Normal);
 							TextArea::from(queries_text.lines().collect::<Vec<_>>())
 						};
 					},
@@ -336,10 +336,10 @@ impl App {
 							self.state = AppState::InspectingResponseBody;
 
 							self.response_body_textarea = if body_text.is_empty() {
-								self.vim = Vim::new(Mode::Insert);
+								self.vim = Vim::new(vim::Mode::Insert);
 								TextArea::default()
 							} else {
-								self.vim = Vim::new(Mode::Normal);
+								self.vim = Vim::new(vim::Mode::Normal);
 								TextArea::from(body_text.lines().collect::<Vec<_>>())
 							};
 						},
@@ -347,10 +347,10 @@ impl App {
 							self.state = AppState::InspectingResponseHeaders;
 
 							self.response_headers_textarea = if headers_text.is_empty() {
-								self.vim = Vim::new(Mode::Insert);
+								self.vim = Vim::new(vim::Mode::Insert);
 								TextArea::default()
 							} else {
-								self.vim = Vim::new(Mode::Normal);
+								self.vim = Vim::new(vim::Mode::Normal);
 								TextArea::from(headers_text.lines().collect::<Vec<_>>())
 							};
 						},
@@ -415,7 +415,7 @@ impl App {
 	}
 
 	fn handle_editing_mode_key(&mut self, key: KeyEvent) -> anyhow::Result<bool> {
-		if self.vim.mode == Mode::Normal {
+		if self.vim.mode == vim::Mode::Normal {
 			match key.code {
 				KeyCode::Enter => {
 					self.save_current_textarea_content()?;
@@ -443,19 +443,19 @@ impl App {
 		};
 
 		match self.vim.transition(input, textarea) {
-			Transition::Mode(mode) if self.vim.mode != mode => {
+			vim::Transition::Mode(mode) if self.vim.mode != mode => {
 				textarea.set_block(mode.block());
 				textarea.set_cursor_style(mode.cursor_style());
 				self.vim = Vim::new(mode);
 			},
-			Transition::Nop | Transition::Mode(_) => {},
-			Transition::Pending(pending_input) => {
+			vim::Transition::Nop | vim::Transition::Mode(_) => {},
+			vim::Transition::Pending(pending_input) => {
 				self.vim = self.vim.clone().with_pending(pending_input);
 			},
-			Transition::Quit => {
+			vim::Transition::Quit => {
 				self.state = AppState::Normal;
 				self.input_mode = InputMode::Normal;
-				self.vim = Vim::new(Mode::Normal);
+				self.vim = Vim::new(vim::Mode::Normal);
 			},
 		}
 

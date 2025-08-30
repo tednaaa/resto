@@ -10,7 +10,6 @@ use ratatui::{
 use crate::{
 	app::{App, AppState, FullscreenSection, InputMode},
 	response::HttpResponse,
-	vim,
 };
 
 pub fn draw(frame: &mut Frame, app: &App) {

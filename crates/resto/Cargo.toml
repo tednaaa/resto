@@ -1,0 +1,36 @@
+[package]
+name = "resto"
+version = "0.5.0"
+edition = "2024"
+license = "mit"
+description = "resto http client"
+homepage = "https://github.com/tednaaa/resto"
+repository = "https://github.com/tednaaa/resto"
+readme = "readme.md"
+keywords = ["tui", "http_client"]
+
+[dependencies]
+editor = { path = "../editor" }
+vim = { path = "../vim" }
+
+clap.workspace = true
+crossterm.workspace = true
+ratatui.workspace = true
+tui-textarea.workspace = true
+rat-text.workspace = true
+
+tokio.workspace = true
+reqwest.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+arboard.workspace = true
+
+tracing-error.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+directories.workspace = true
+lazy_static.workspace = true
